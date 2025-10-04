@@ -38,7 +38,7 @@ ipcMain.handle('google-oauth', async () => {
     });
 
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-      `client_id=743628186063-d3m3lahc8d5bhvuoc81rvdsbolh6t754.apps.googleusercontent.com` +
+      `client_id={Your google client id}` +
       `&redirect_uri=http://localhost:8000/auth/callback` +
       `&response_type=token` +
       `&scope=email profile`;
