@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satellite Browser - BEACON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #4285f4;
+            --accent: #ea4335;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --dark: #0a0a1a;
+            --darker: #050514;
+            --light: #f8f9fa;
+            --gray: #5f6368;
+            --light-gray: #f1f3f4;
+            --border: #dadce0;
+            --card-bg: rgba(255, 255, 255, 0.12);
+            --card-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --star-color: rgba(255, 255, 255, 0.8);
+            --nebula-color: rgba(102, 126, 234, 0.2);
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(145deg, var(--darker) 0%, var(--dark) 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            padding-top: 80px;
+            line-height: 1.6;
+        }
+
+        /* Space background with stars and nebula */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(1px 1px at 20px 30px, var(--star-color), transparent),
+                radial-gradient(1px 1px at 50px 80px, var(--star-color), transparent),
+                radial-gradient(1px 1px at 100px 50px, rgba(255, 255, 255, 0.6), transparent),
+                radial-gradient(1px 1px at 150px 90px, var(--star-color), transparent);
+            background-repeat: repeat;
+            background-size: 200px 100px;
+            animation: twinkle 4s linear infinite;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top left, var(--nebula-color) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Orbital path animation */
+        .orbital-path {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .orbital-path::before {
+            content: '';
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            left: 80%;
+            border: 1px solid rgba(102, 126, 234, 0.25);
+            border-radius: 50%;
+            animation: orbit 30s linear infinite;
+            transform-origin: center;
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(10, 10, 26, 0.97), rgba(20, 20, 40, 0.97));
+            backdrop-filter: blur(20px);
+            padding: 16px 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: 1.2px;
+            background: linear-gradient(90deg, #4fc3f7, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            color: #4fc3f7;
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        .back-button {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(26, 115, 232, 0.15);
+            border-radius: 10px;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 16px;
+            font-weight: 500;
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .back-button:hover {
+            background: rgba(26, 115, 232, 0.3);
+            color: #4fc3f7;
+            transform: translateY(-2px);
+        }
+
+        .back-button i {
+            font-size: 18px;
+        }
+
+        .container {
+            max-width: 1240px;
+            margin: 60px auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 800;
+            color: white;
+            background: linear-gradient(90deg, #4fc3f7, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+
+        .page-subtitle {
+            font-size: 18px;
+            color: #b0b0d0;
+            max-width: 700px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .satellites-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 30px;
+        }
+
+        .satellite-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .satellite-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border-color: rgba(102, 126, 234, 0.6);
+        }
+
+        .satellite-visual {
+            height: 140px;
+            background: linear-gradient(135deg, rgba(26, 115, 232, 0.25), rgba(10, 10, 20, 0.85));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .satellite-icon {
+            font-size: 52px;
+            color: #4fc3f7;
+            transition: var(--transition);
+        }
+
+        .satellite-card:hover .satellite-icon {
+            transform: scale(1.15);
+        }
+
+        .satellite-info {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .satellite-header {
+            margin-bottom: 20px;
+        }
+
+        .satellite-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .satellite-designation {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 500;
+            background: rgba(26, 115, 232, 0.2);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .satellite-status {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-active {
+            background: rgba(52, 168, 83, 0.25);
+            color: var(--success);
+        }
+
+        .status-inactive {
+            background: rgba(234, 67, 53, 0.25);
+            color: var(--accent);
+        }
+
+        .specs-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex: 1;
+        }
+
+        .spec-item {
+            padding: 14px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: var(--transition);
+        }
+
+        .spec-item:hover {
+            background: rgba(30, 30, 50, 0.35);
+        }
+
+        .spec-label {
+            font-size: 12px;
+            color: #b0b0d0;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .spec-value {
+            font-size: 17px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .altitude-value {
+            color: #4fc3f7;
+        }
+
+        .resolution-value {
+            color: #66bb6a;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #b0b0d0;
+            grid-column: 1 / -1;
+        }
+
+        .loading i {
+            font-size: 52px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            animation: pulse 2.5s infinite;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #b0b0d0;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i {
+            font-size: 52px;
+            margin-bottom: 20px;
+            color: var(--primary);
+            animation: pulse 2.5s infinite;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 24px;
+            }
+
+            .page-title {
+                font-size: 32px;
+            }
+
+            .page-subtitle {
+                font-size: 16px;
+            }
+
+            .satellites-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .satellite-visual {
+                height: 120px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .page-title {
+                font-size: 28px;
+            }
+
+            .satellite-name {
+                font-size: 20px;
+            }
+
+            .specs-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orbital-path"></div>
+    <div class="stars" id="stars"></div>
+    
+    <div class="header">
+        <div class="logo">
+            <i class="fas fa-satellite logo-icon"></i>
+            <span>BEACON</span>
+        </div>
+        <button class="back-button" id="backButton">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </button>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">ARGUS</h1>
+            <p class="page-subtitle">Explore our advanced satellite network ARGUS for Earth observation and tracking missions.</p>
+        </div>
+        
+        <div class="satellites-grid" id="satellitesGrid">
+            <div class="loading">
+                <i class="fas fa-satellite"></i>
+                <p>Loading satellite fleet...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Create starry background
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            const starCount = 150;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                const x = Math.random() * 100;
+                const y = Math.random() * 100;
+                star.style.left = `${x}%`;
+                star.style.top = `${y}%`;
+                
+                const size = Math.random() * 2 + 0.5;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                const duration = 3 + Math.random() * 5;
+                star.style.setProperty('--duration', `${duration}s`);
+                
+                const delay = Math.random() * 6;
+                star.style.animationDelay = `${delay}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Satellite data will be stored here
+        let satelliteData = [];
+        
+        // Fetch satellite data from API
+        async function loadSatellites() {
+            try {
+                const response = await window.electronAPI.apiFetch('/satellites/nearest?limit=32', {
+                    method: 'GET'
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load satellites');
+                }
+                
+                satelliteData = response.data;
+                displaySatellites(satelliteData);
+            } catch (error) {
+                console.error('Error loading satellites:', error);
+                document.getElementById('satellitesGrid').innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-satellite"></i>
+                        <p>Failed to load satellite data. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function displaySatellites(satellites) {
+            const container = document.getElementById('satellitesGrid');
+            
+            if (satellites.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <p>No satellites available in the fleet.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = satellites.map((sat, index) => `
+                <div class="satellite-card">
+                    <div class="satellite-visual">
+                        <i class="fas fa-satellite satellite-icon"></i>
+                    </div>
+                    <div class="satellite-info">
+                        <div class="satellite-header">
+                            <div class="satellite-name">
+                                ${sat.name}
+                                <span class="satellite-designation">${sat.designation}</span>
+                            </div>
+                            <div class="satellite-status status-${sat.is_active ? 'active' : 'inactive'}">
+                                ${sat.is_active ? 'Active' : 'Inactive'}
+                            </div>
+                        </div>
+                        <div class="specs-grid">
+                            <div class="spec-item">
+                                <div class="spec-label">Orbit Altitude</div>
+                                <div class="spec-value altitude-value">${sat.orbit_altitude.toFixed(0)} km</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Resolution</div>
+                                <div class="spec-value resolution-value">${sat.resolution} m/px</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Type</div>
+                                <div class="spec-value">Earth Observation</div>
+                            </div>
+                            <div class="spec-item">
+                                <div class="spec-label">Status</div>
+                                <div class="spec-value">${sat.is_active ? 'Operational' : 'Offline'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            createStars();
+            loadSatellites();
+            
+            // Setup back button
+            const backButton = document.getElementById('backButton');
+            backButton.addEventListener('click', () => {
+                window.history.back();
+            });
+        });
+    </script>
+</body>
+</html>

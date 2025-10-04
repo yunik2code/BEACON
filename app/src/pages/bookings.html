@@ -1,0 +1,1055 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Bookings - BEACON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #4285f4;
+            --accent: #ea4335;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --dark: #0a0a1a;
+            --darker: #050514;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(145deg, var(--darker) 0%, var(--dark) 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            position: relative;
+            padding-top: 85px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, rgba(255, 255, 255, 0.7), transparent),
+                radial-gradient(1px 1px at 60px 70px, rgba(255, 255, 255, 0.7), transparent),
+                radial-gradient(2px 2px at 90px 10px, rgba(79, 195, 247, 0.8), transparent);
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: twinkle 5s ease-in-out infinite;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at top left, rgba(102, 126, 234, 0.2) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        .header {
+            background: linear-gradient(90deg, rgba(10, 10, 26, 0.95), rgba(15, 15, 35, 0.95));
+            backdrop-filter: blur(20px) saturate(180%);
+            padding: 20px 50px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .back-btn {
+            background: rgba(79, 195, 247, 0.15);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            color: #4fc3f7;
+            padding: 10px 18px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .back-btn:hover {
+            background: rgba(79, 195, 247, 0.25);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 195, 247, 0.3);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #4fc3f7, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .new-booking-btn {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3), rgba(102, 126, 234, 0.3));
+            color: white;
+            border: 1px solid rgba(79, 195, 247, 0.4);
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .new-booking-btn:hover {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.4), rgba(102, 126, 234, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 195, 247, 0.4);
+        }
+
+        .content {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 30px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 32px;
+        }
+
+        @media (min-width: 992px) {
+            .content {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        .bookings-section {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filter-tab {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            color: #b0b0d0;
+            border-radius: 25px;
+            transition: var(--transition);
+            font-weight: 500;
+        }
+
+        .filter-tab:hover {
+            background: rgba(79, 195, 247, 0.15);
+            color: #4fc3f7;
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+
+        .filter-tab.active {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3), rgba(102, 126, 234, 0.3));
+            color: white;
+            border-color: rgba(79, 195, 247, 0.5);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+        }
+
+        .booking-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            padding: 24px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 16px;
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .booking-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 4px;
+            background: linear-gradient(180deg, #4fc3f7, #667eea);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .booking-card:hover::before {
+            opacity: 1;
+        }
+
+        .booking-card:hover {
+            transform: translateY(-5px) translateX(3px);
+            box-shadow: 0 12px 40px rgba(79, 195, 247, 0.3);
+            border-color: rgba(79, 195, 247, 0.4);
+        }
+
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 16px;
+        }
+
+        .booking-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .booking-title i {
+            color: #4fc3f7;
+            filter: drop-shadow(0 0 8px rgba(79, 195, 247, 0.5));
+        }
+
+        .booking-type {
+            font-size: 14px;
+            color: #b0b0d0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .booking-status {
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .status-pending { 
+            background: rgba(255, 193, 7, 0.2); 
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+        .status-confirmed { 
+            background: rgba(52, 168, 83, 0.2); 
+            color: #66bb6a;
+            border: 1px solid rgba(52, 168, 83, 0.3);
+        }
+        .status-in_progress { 
+            background: rgba(79, 195, 247, 0.2); 
+            color: #4fc3f7;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+        }
+        .status-completed { 
+            background: rgba(52, 168, 83, 0.2); 
+            color: #66bb6a;
+            border: 1px solid rgba(52, 168, 83, 0.3);
+        }
+        .status-cancelled { 
+            background: rgba(234, 67, 53, 0.2); 
+            color: #ef5350;
+            border: 1px solid rgba(234, 67, 53, 0.3);
+        }
+
+        .booking-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 16px 0;
+            margin-bottom: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-item {
+            font-size: 14px;
+        }
+
+        .detail-label {
+            color: #b0b0d0;
+            margin-bottom: 4px;
+            font-weight: 500;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        .booking-notes {
+            font-size: 14px;
+            color: #b0b0d0;
+            font-style: italic;
+            padding-top: 12px;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .view-details-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(79, 195, 247, 0.2);
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #4fc3f7;
+            margin-top: 10px;
+            transition: var(--transition);
+        }
+
+        .booking-card:hover .view-details-badge {
+            background: rgba(79, 195, 247, 0.3);
+            transform: translateX(5px);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #a0a0c0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            color: #4fc3f7;
+            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.4));
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #a0a0c0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .loading i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            animation: pulse 2s infinite;
+            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.5));
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .payment-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            align-self: start;
+            position: sticky;
+            top: 105px;
+        }
+
+        .payment-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .tier-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .tier-card {
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            background: rgba(30, 30, 50, 0.3);
+        }
+
+        .tier-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 4px;
+            background: #4fc3f7;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .tier-card:hover {
+            border-color: rgba(79, 195, 247, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .tier-card.selected {
+            border-color: rgba(79, 195, 247, 0.6);
+            box-shadow: 0 6px 25px rgba(79, 195, 247, 0.3);
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        .tier-card.selected::before {
+            opacity: 1;
+        }
+
+        .tier-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .tier-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tier-name i {
+            color: #4fc3f7;
+        }
+
+        .tier-priority {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .priority-highest { background: rgba(52, 168, 83, 0.2); color: #66bb6a; border: 1px solid rgba(52, 168, 83, 0.3); }
+        .priority-high { background: rgba(79, 195, 247, 0.2); color: #4fc3f7; border: 1px solid rgba(79, 195, 247, 0.3); }
+        .priority-medium { background: rgba(255, 193, 7, 0.2); color: #ffc107; border: 1px solid rgba(255, 193, 7, 0.3); }
+        .priority-low { background: rgba(156, 39, 176, 0.2); color: #ba68c8; border: 1px solid rgba(156, 39, 176, 0.3); }
+
+        .tier-pricing {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .price-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .price-label {
+            font-size: 13px;
+            color: #b0b0d0;
+            margin-bottom: 6px;
+        }
+
+        .price-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #4fc3f7;
+        }
+
+        .tier-benefits {
+            font-size: 14px;
+            color: #b0b0d0;
+        }
+
+        .benefit-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .benefit-icon {
+            color: #66bb6a;
+            margin-top: 4px;
+        }
+
+        .total-cost {
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            text-align: center;
+            padding: 16px;
+            background: rgba(79, 195, 247, 0.1);
+            border-radius: 12px;
+            margin: 12px 0;
+            border: 1px solid rgba(79, 195, 247, 0.2);
+        }
+
+        .payment-methods-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: white;
+            text-align: center;
+            margin-top: 12px;
+        }
+
+        .payment-options {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 16px 0;
+        }
+
+        .payment-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100px;
+            text-align: center;
+            background: rgba(30, 30, 50, 0.3);
+        }
+
+        .payment-option:hover {
+            border-color: rgba(79, 195, 247, 0.4);
+            background: rgba(79, 195, 247, 0.1);
+        }
+
+        .payment-option.selected {
+            border-color: rgba(79, 195, 247, 0.6);
+            background: rgba(79, 195, 247, 0.15);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.3);
+        }
+
+        .payment-icon {
+            width: 32px;
+            height: 32px;
+            fill: #4fc3f7;
+        }
+
+        .payment-label {
+            font-size: 14px;
+            color: white;
+            font-weight: 500;
+        }
+
+        .pay-btn {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.3), rgba(102, 126, 234, 0.3));
+            color: white;
+            border: 1px solid rgba(79, 195, 247, 0.4);
+            padding: 14px 32px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto 0;
+            transition: var(--transition);
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .pay-btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.4), rgba(102, 126, 234, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(79, 195, 247, 0.4);
+        }
+
+        .pay-btn:disabled {
+            background: rgba(100, 100, 120, 0.2);
+            border-color: rgba(100, 100, 120, 0.3);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 991px) {
+            .content { grid-template-columns: 1fr; }
+            .payment-section { 
+                order: 2;
+                position: static;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header { padding: 18px 25px; }
+            .header-title { font-size: 20px; }
+            .new-booking-btn { padding: 10px 18px; font-size: 13px; }
+            .booking-card { padding: 20px; }
+            .booking-title { font-size: 18px; }
+            .tier-pricing { flex-direction: column; gap: 12px; }
+            .price-item { text-align: left; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-left">
+            <button class="back-btn" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <div class="header-title">My Bookings</div>
+        </div>
+        <button class="new-booking-btn" onclick="window.location.href='new-booking.html'">
+            <i class="fas fa-plus"></i> New Booking
+        </button>
+    </div>
+
+    <div class="content">
+        <div class="bookings-section">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all" onclick="filterBookings('all')">All</button>
+                <button class="filter-tab" data-filter="pending" onclick="filterBookings('pending')">Pending</button>
+                <button class="filter-tab" data-filter="confirmed" onclick="filterBookings('confirmed')">Confirmed</button>
+                <button class="filter-tab" data-filter="completed" onclick="filterBookings('completed')">Completed</button>
+            </div>
+
+            <div id="bookingsList">
+                <div class="loading">
+                    <i class="fas fa-satellite"></i>
+                    <p>Loading bookings...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="payment-section">
+            <div class="payment-title">Pay for Pending Bookings</div>
+            
+            <div class="tier-selection">
+                <div class="tier-card" data-tier="researcher" onclick="selectTier('researcher')">
+                    <div class="tier-header">
+                        <div class="tier-name">
+                            <i class="fas fa-graduation-cap"></i> Researcher
+                        </div>
+                        <span class="tier-priority priority-highest">Highest</span>
+                    </div>
+                    <div class="tier-pricing">
+                        <div class="price-item">
+                            <div class="price-label">Tracking</div>
+                            <div class="price-value">$10,000</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Imaging</div>
+                            <div class="price-value">$2,000</div>
+                        </div>
+                    </div>
+                    <div class="tier-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Highest priority scheduling</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Real-time satellite control</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tier-card" data-tier="super" onclick="selectTier('super')">
+                    <div class="tier-header">
+                        <div class="tier-name">
+                            <i class="fas fa-star"></i> Super
+                        </div>
+                        <span class="tier-priority priority-high">High</span>
+                    </div>
+                    <div class="tier-pricing">
+                        <div class="price-item">
+                            <div class="price-label">Tracking</div>
+                            <div class="price-value">$5,000</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Imaging</div>
+                            <div class="price-value">$1,000</div>
+                        </div>
+                    </div>
+                    <div class="tier-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>High priority access</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Enhanced resources</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tier-card" data-tier="pro" onclick="selectTier('pro')">
+                    <div class="tier-header">
+                        <div class="tier-name">
+                            <i class="fas fa-user-tie"></i> Pro
+                        </div>
+                        <span class="tier-priority priority-medium">Medium</span>
+                    </div>
+                    <div class="tier-pricing">
+                        <div class="price-item">
+                            <div class="price-label">Tracking</div>
+                            <div class="price-value">$3,000</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Imaging</div>
+                            <div class="price-value">$600</div>
+                        </div>
+                    </div>
+                    <div class="tier-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Standard scheduling</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Limited control</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tier-card" data-tier="enthusiast" onclick="selectTier('enthusiast')">
+                    <div class="tier-header">
+                        <div class="tier-name">
+                            <i class="fas fa-user"></i> Enthusiast
+                        </div>
+                        <span class="tier-priority priority-low">Basic</span>
+                    </div>
+                    <div class="tier-pricing">
+                        <div class="price-item">
+                            <div class="price-label">Tracking</div>
+                            <div class="price-value">$3</div>
+                        </div>
+                        <div class="price-item">
+                            <div class="price-label">Imaging</div>
+                            <div class="price-value">$6</div>
+                        </div>
+                    </div>
+                    <div class="tier-benefits">
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Recorded sessions only</span>
+                        </div>
+                        <div class="benefit-item">
+                            <i class="fas fa-check benefit-icon"></i>
+                            <span>Image library access</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="total-cost" id="totalCost">Total Cost: $0 (Select a tier)</div>
+            
+            <div class="payment-methods-title">Select Payment Method</div>
+            <div class="payment-options">
+                <div class="payment-option" data-method="visa" onclick="selectPaymentMethod('visa')">
+                    <svg class="payment-icon" viewBox="0 0 24 24">
+                        <path d="M2 6h20v12H2z" fill="#1a73e8"/>
+                        <path d="M7 10l2 4h2l2-4M10 14h4" stroke="white" stroke-width="2" fill="none"/>
+                    </svg>
+                    <span class="payment-label">Visa</span>
+                </div>
+                <div class="payment-option" data-method="mastercard" onclick="selectPaymentMethod('mastercard')">
+                    <svg class="payment-icon" viewBox="0 0 24 24">
+                        <path d="M2 6h20v12H2z" fill="#1a73e8"/>
+                        <circle cx="12" cy="13" r="3" fill="white"/>
+                        <circle cx="7" cy="13" r="3" fill="white"/>
+                        <circle cx="17" cy="13" r="3" fill="white"/>
+                    </svg>
+                    <span class="payment-label">MasterCard</span>
+                </div>
+                <div class="payment-option" data-method="paypal" onclick="selectPaymentMethod('paypal')">
+                    <svg class="payment-icon" viewBox="0 0 24 24">
+                        <path d="M2 6h20v12H2z" fill="#1a73e8"/>
+                        <path d="M7 9h3c2 0 3 1 3 3s-1 3-3 3H7M14 9h3c2 0 3 1 3 3s-1 3-3 3h-3" stroke="white" stroke-width="2" fill="none"/>
+                    </svg>
+                    <span class="payment-label">PayPal</span>
+                </div>
+                <div class="payment-option" data-method="stripe" onclick="selectPaymentMethod('stripe')">
+                    <svg class="payment-icon" viewBox="0 0 24 24">
+                        <path d="M2 6h20v12H2z" fill="#1a73e8"/>
+                        <path d="M7 10c2 0 3 2 3 4H7c-2 0-3-2-3-4s1-4 3-4z" fill="white"/>
+                    </svg>
+                    <span class="payment-label">Stripe</span>
+                </div>
+            </div>
+            
+            <button class="pay-btn" id="payButton" disabled>Pay Now</button>
+        </div>
+    </div>
+
+    <script>
+        let allBookings = [];
+        let currentFilter = 'all';
+        let selectedTier = null;
+        let selectedPaymentMethod = null;
+        const tierPrices = {
+            'researcher': { tracking: 200, imaging: 400 },
+            'super': { tracking: 50, imaging: 100 },
+            'pro': { tracking: 30, imaging: 60 },
+            'enthusiast': { tracking: 3, imaging: 6 }
+        };
+
+        async function loadBookings() {
+            const container = document.getElementById('bookingsList');
+            
+            try {
+                const response = await window.electronAPI.apiFetch('/bookings', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load bookings');
+                }
+
+                allBookings = response.data;
+                displayBookings(allBookings);
+                updateTotalCost();
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                        <p>Failed to load bookings. Please try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayBookings(bookings) {
+            const container = document.getElementById('bookingsList');
+
+            if (bookings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                        <h3 style="margin-bottom: 8px; color: white;">No bookings found</h3>
+                        <p>Start by creating your first booking!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = bookings.map(booking => `
+                <div class="booking-card" onclick="viewBookingDetails(${booking.id})">
+                    <div class="booking-header">
+                        <div>
+                            <div class="booking-title">
+                                ${booking.booking_type === 'photograph' ? '<i class="fas fa-camera"></i>' : '<i class="fas fa-satellite"></i>'}
+                                ${booking.object_name}
+                            </div>
+                            <div class="booking-type">
+                                ${booking.booking_type === 'photograph' ? '<i class="fas fa-image"></i> Photography' : '<i class="fas fa-route"></i> Tracking'} • ${booking.object_type}
+                            </div>
+                        </div>
+                        <div class="booking-status status-${booking.status}">
+                            ${booking.status.replace('_', ' ')}
+                        </div>
+                    </div>
+
+                    <div class="booking-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Satellite</div>
+                            <div class="detail-value">${booking.satellite.name}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Scheduled Time</div>
+                            <div class="detail-value">${new Date(booking.scheduled_time).toLocaleString()}</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Duration</div>
+                            <div class="detail-value">${booking.duration} minutes</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">Created</div>
+                            <div class="detail-value">${new Date(booking.created_at).toLocaleDateString()}</div>
+                        </div>
+                    </div>
+
+                    ${booking.notes ? `<div class="booking-notes">Note: ${booking.notes}</div>` : ''}
+                    
+                    ${booking.status === 'completed' ? `
+                        <div class="view-details-badge">
+                            <i class="fas fa-images"></i> View Images
+                            <i class="fas fa-arrow-right"></i>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function viewBookingDetails(bookingId) {
+            window.location.href = `booking-detail.html?id=${bookingId}`;
+        }
+
+        function filterBookings(filter) {
+            currentFilter = filter;
+            
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+            if (filter === 'all') {
+                displayBookings(allBookings);
+            } else {
+                const filtered = allBookings.filter(b => b.status === filter);
+                displayBookings(filtered);
+            }
+        }
+
+        function selectTier(tier) {
+            selectedTier = tier;
+            updateTierSelection();
+            updateTotalCost();
+            updatePayButton();
+        }
+
+        function selectPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            updatePaymentMethodSelection();
+            updatePayButton();
+        }
+
+        function updateTierSelection() {
+            document.querySelectorAll('.tier-card').forEach(card => {
+                card.classList.remove('selected');
+                if (card.getAttribute('data-tier') === selectedTier) {
+                    card.classList.add('selected');
+                }
+            });
+        }
+
+        function updatePaymentMethodSelection() {
+            document.querySelectorAll('.payment-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.getAttribute('data-method') === selectedPaymentMethod) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+        function updateTotalCost() {
+            const totalCostElement = document.getElementById('totalCost');
+            if (!selectedTier) {
+                totalCostElement.textContent = 'Total Cost: $0 (Select a tier)';
+                return;
+            }
+
+            const prices = tierPrices[selectedTier];
+            let numTracking = 0;
+            let numImaging = 0;
+
+            allBookings.forEach(booking => {
+                if (booking.status === 'pending') {
+                    if (booking.booking_type === 'track') numTracking++;
+                    else if (booking.booking_type === 'photograph') numImaging++;
+                }
+            });
+
+            const total = (numTracking * prices.tracking) + (numImaging * prices.imaging);
+            totalCostElement.textContent = `Total Cost: ${total.toLocaleString()} (${numTracking} tracking, ${numImaging} imaging)`;
+        }
+
+        function updatePayButton() {
+            const payButton = document.getElementById('payButton');
+            const hasPending = allBookings.some(booking => booking.status === 'pending');
+            payButton.disabled = !(selectedTier && selectedPaymentMethod && hasPending);
+        }
+
+        function confirmPayment() {
+            if (selectedTier && selectedPaymentMethod) {
+                const prices = tierPrices[selectedTier];
+                let numTracking = 0;
+                let numImaging = 0;
+                allBookings.forEach(booking => {
+                    if (booking.status === 'pending') {
+                        if (booking.booking_type === 'track') numTracking++;
+                        else if (booking.booking_type === 'photograph') numImaging++;
+                    }
+                });
+                const total = (numTracking * prices.tracking) + (numImaging * prices.imaging);
+                
+                alert(`Payment of ${total.toLocaleString()} confirmed for ${selectedTier.charAt(0).toUpperCase() + selectedTier.slice(1)} tier using ${selectedPaymentMethod.charAt(0).toUpperCase() + selectedPaymentMethod.slice(1)}! ${numTracking} tracking and ${numImaging} imaging bookings processed.`);
+
+                allBookings.forEach(booking => {
+                    if (booking.status === 'pending') {
+                        booking.status = 'confirmed';
+                    }
+                });
+
+                selectedTier = null;
+                selectedPaymentMethod = null;
+                updateTierSelection();
+                updatePaymentMethodSelection();
+                updateTotalCost();
+                updatePayButton();
+                displayBookings(currentFilter === 'all' ? allBookings : allBookings.filter(b => b.status === currentFilter));
+            }
+        }
+
+        loadBookings();
+
+        document.getElementById('payButton').addEventListener('click', confirmPayment);
+    </script>
+</body>
+</html>

@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Profile - Mission Control</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0e27;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        /* Animated space background */
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Orbiting elements */
+        .orbit-container {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orbiting-satellite {
+            position: absolute;
+            font-size: 30px;
+            opacity: 0.4;
+            animation: orbit 20s linear infinite;
+            filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(200px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(200px) rotate(-360deg); }
+        }
+
+        .satellite-1 {
+            top: 30%;
+            left: 20%;
+            animation-duration: 25s;
+        }
+
+        .satellite-2 {
+            top: 60%;
+            right: 20%;
+            animation-duration: 30s;
+            animation-delay: 5s;
+        }
+
+        /* Planets */
+        .planet {
+            position: fixed;
+            border-radius: 50%;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .planet-1 {
+            width: 100px;
+            height: 100px;
+            top: 10%;
+            right: 10%;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .planet-2 {
+            width: 60px;
+            height: 60px;
+            bottom: 15%;
+            left: 8%;
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+            animation: float 8s ease-in-out infinite 2s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .container {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 20px;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(59, 130, 246, 0.2),
+                inset 0 0 60px rgba(100, 150, 255, 0.05);
+            width: 100%;
+            max-width: 600px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .profile-picture {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: block;
+            border: 3px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
+        h1 {
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            font-size: 32px;
+            text-shadow: 0 0 20px rgba(100, 150, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+            font-size: 15px;
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(147, 51, 234, 0.15));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 35px;
+            font-size: 14px;
+            color: #cbd5e1;
+            border-left: 4px solid rgba(59, 130, 246, 0.7);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: #cbd5e1;
+            font-weight: 500;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .required {
+            color: #f87171;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            border-radius: 10px;
+            font-size: 15px;
+            color: #e2e8f0;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: rgba(59, 130, 246, 0.6);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+            background: rgba(30, 41, 59, 0.8);
+        }
+
+        input::placeholder, textarea::placeholder {
+            color: #64748b;
+        }
+
+        select {
+            cursor: pointer;
+        }
+
+        select option {
+            background: #1e293b;
+            color: #e2e8f0;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
+            color: #e2e8f0;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            padding: 16px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .submit-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .submit-btn:hover::before {
+            left: 100%;
+        }
+
+        .submit-btn:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.4), rgba(147, 51, 234, 0.4));
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .error {
+            color: #fca5a5;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .skip-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .skip-link a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .skip-link a:hover {
+            color: #93c5fd;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        /* Progress indicator */
+        .progress-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(100, 150, 255, 0.3);
+            transition: all 0.3s;
+        }
+
+        .dot.active {
+            background: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+        }
+    </style>
+</head>
+<body>
+    <!-- Space background -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- Orbiting elements -->
+    <div class="orbit-container">
+        <div class="orbiting-satellite satellite-1">🛰️</div>
+        <div class="orbiting-satellite satellite-2">🌍</div>
+    </div>
+    
+    <div class="planet planet-1"></div>
+    <div class="planet planet-2"></div>
+
+    <div class="container">
+        <div class="profile-header">
+            <img id="profilePicture" class="profile-picture" alt="Profile">
+            <h1>Complete Mission Profile</h1>
+            <p class="subtitle">Initialize your command credentials</p>
+        </div>
+
+        <div class="progress-dots">
+            <div class="dot active"></div>
+            <div class="dot active"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="info-box">
+            🚀 Complete your profile to access full mission control capabilities and start booking orbital time slots.
+        </div>
+
+        <form id="profileForm">
+            <div class="form-group">
+                <label for="fullName">Full Name <span class="required">*</span></label>
+                <input type="text" id="fullName" name="fullName" placeholder="Commander Name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="mobileNo">Contact Frequency <span class="required">*</span></label>
+                <input type="tel" id="mobileNo" name="mobileNo" placeholder="+1 (555) 123-4567" required>
+            </div>
+
+            <div class="form-group">
+                <label for="organization">Organization (Optional)</label>
+                <input type="text" id="organization" name="organization" placeholder="Space Agency or Institution">
+            </div>
+
+            <div class="form-group">
+                <label for="useCase">Mission Type (Optional)</label>
+                <select id="useCase" name="useCase">
+                    <option value="">Select mission type...</option>
+                    <option value="research">Research & Academia</option>
+                    <option value="agriculture">Agricultural Monitoring</option>
+                    <option value="urban-planning">Urban Development</option>
+                    <option value="environmental">Environmental Analysis</option>
+                    <option value="disaster">Disaster Response</option>
+                    <option value="commercial">Commercial Operations</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Mission Objectives (Optional)</label>
+                <textarea id="notes" name="notes" rows="4" placeholder="Describe your imaging requirements and objectives..."></textarea>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">Initialize Profile</button>
+            
+            <div class="error" id="error"></div>
+        </form>
+
+        <div class="skip-link">
+            <a href="#" id="skipLink">Skip for now →</a>
+        </div>
+    </div>
+
+    <script>
+        // Generate stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        const form = document.getElementById('profileForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorDiv = document.getElementById('error');
+        const skipLink = document.getElementById('skipLink');
+        const profilePicture = document.getElementById('profilePicture');
+
+        // Load user data
+        window.electronAPI.getUser().then(user => {
+            if (user) {
+                document.getElementById('fullName').value = user.full_name || '';
+                if (user.profile_picture) {
+                    profilePicture.src = user.profile_picture;
+                } else {
+                    profilePicture.style.display = 'none';
+                }
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorDiv.style.display = 'none';
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Transmitting data...';
+
+            try {
+                const formData = {
+                    full_name: document.getElementById('fullName').value,
+                    mobile_no: document.getElementById('mobileNo').value
+                };
+
+                const response = await window.electronAPI.apiFetch('/user/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorMsg = response.data?.detail || 'Failed to update profile';
+                    throw new Error(errorMsg);
+                }
+
+                const data = response.data;
+                await window.electronAPI.storeUser(data);
+
+                // Redirect to home page
+                window.location.href = 'home.html';
+
+            } catch (error) {
+                console.error('Profile update error:', error);
+                errorDiv.textContent = error.message || 'Transmission failed. Please retry.';
+                errorDiv.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Initialize Profile';
+            }
+        });
+
+        skipLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            window.location.href = 'home.html';
+        });
+
+        // Update progress dots based on form completion
+        const inputs = form.querySelectorAll('input[required]');
+        const dots = document.querySelectorAll('.dot');
+        
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                const filled = Array.from(inputs).filter(inp => inp.value.trim() !== '').length;
+                const progress = Math.min(filled, dots.length);
+                
+                dots.forEach((dot, index) => {
+                    if (index < progress) {
+                        dot.classList.add('active');
+                    } else {
+                        dot.classList.remove('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

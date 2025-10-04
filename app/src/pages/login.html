@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Satellite Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #0a0e27;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Animated space background */
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        .shooting-star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px 2px rgba(255, 255, 255, 0.5);
+            animation: shoot 3s linear infinite;
+        }
+
+        @keyframes shoot {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(-300px, 300px);
+                opacity: 0;
+            }
+        }
+
+        /* Orbiting satellite */
+        .satellite {
+            position: absolute;
+            top: 10%;
+            right: 15%;
+            font-size: 40px;
+            animation: orbit 20s linear infinite;
+            filter: drop-shadow(0 0 10px rgba(100, 150, 255, 0.5));
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg) translateX(150px) rotate(0deg); }
+            100% { transform: rotate(360deg) translateX(150px) rotate(-360deg); }
+        }
+
+        /* Earth in corner */
+        .earth {
+            position: absolute;
+            bottom: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 50%, #60a5fa 100%);
+            box-shadow: 
+                inset -30px -30px 50px rgba(0, 0, 0, 0.5),
+                0 0 80px rgba(59, 130, 246, 0.4);
+            animation: rotate 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .container {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            padding: 50px;
+            border-radius: 20px;
+            border: 1px solid rgba(100, 150, 255, 0.2);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(59, 130, 246, 0.1),
+                inset 0 0 60px rgba(100, 150, 255, 0.05);
+            width: 450px;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            color: #e2e8f0;
+            margin-bottom: 10px;
+            font-size: 32px;
+            font-weight: 600;
+            text-shadow: 0 0 20px rgba(100, 150, 255, 0.3);
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 40px;
+            font-size: 15px;
+        }
+
+        .google-btn {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(147, 51, 234, 0.2));
+            border: 1px solid rgba(100, 150, 255, 0.3);
+            padding: 16px 32px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 16px;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            transition: all 0.3s;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .google-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .google-btn:hover::before {
+            left: 100%;
+        }
+
+        .google-btn:hover {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(147, 51, 234, 0.3));
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .google-icon {
+            width: 22px;
+            height: 22px;
+        }
+
+        .error {
+            color: #f87171;
+            margin-top: 20px;
+            font-size: 14px;
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .loading {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid rgba(100, 150, 255, 0.2);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .features {
+            margin-top: 40px;
+            text-align: left;
+            padding-top: 30px;
+            border-top: 1px solid rgba(100, 150, 255, 0.1);
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #cbd5e1;
+            padding: 12px;
+            background: rgba(59, 130, 246, 0.05);
+            border-radius: 8px;
+            border-left: 2px solid rgba(59, 130, 246, 0.5);
+            transition: all 0.3s;
+        }
+
+        .feature:hover {
+            background: rgba(59, 130, 246, 0.1);
+            transform: translateX(5px);
+        }
+
+        .feature-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            filter: drop-shadow(0 0 5px rgba(100, 150, 255, 0.5));
+        }
+
+        /* Add some planets */
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.6;
+        }
+
+        .planet1 {
+            width: 60px;
+            height: 60px;
+            top: 20%;
+            left: 10%;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.3);
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .planet2 {
+            width: 40px;
+            height: 40px;
+            bottom: 30%;
+            left: 5%;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
+            animation: float 5s ease-in-out infinite 1s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Space background -->
+    <div class="stars" id="stars"></div>
+    <div class="satellite">🛰️</div>
+    <div class="earth"></div>
+    <div class="planet planet1"></div>
+    <div class="planet planet2"></div>
+
+    <div class="container">
+        <img src="../assets/logo1.png" alt="Website Logo" width="130" height="130">
+
+        <h1><b>BEACON</b></h1>
+        <p class="subtitle">Access Space imaging from orbit</p>
+        
+        <button class="google-btn" id="googleLoginBtn">
+            <svg class="google-icon" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Sign in with Google
+        </button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #94a3b8;">Establishing connection...</p>
+        </div>
+
+        <div class="error" id="error"></div>
+
+        <div class="features">
+            <div class="feature">
+                <span class="feature-icon">📡</span>
+                <span>Multi-satellite network access</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">🌍</span>
+                <span>Ultra high-resolution imaging</span>
+            </div>
+            <div class="feature">
+                <span class="feature-icon">⚡</span>
+                <span>Real-time orbital tracking</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Generate stars
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 3 + 's';
+            starsContainer.appendChild(star);
+        }
+
+        // Generate shooting stars
+        for (let i = 0; i < 3; i++) {
+            const shootingStar = document.createElement('div');
+            shootingStar.className = 'shooting-star';
+            shootingStar.style.left = Math.random() * 100 + '%';
+            shootingStar.style.top = Math.random() * 50 + '%';
+            shootingStar.style.animationDelay = Math.random() * 5 + 's';
+            starsContainer.appendChild(shootingStar);
+        }
+
+        const googleLoginBtn = document.getElementById('googleLoginBtn');
+        const loading = document.getElementById('loading');
+        const errorDiv = document.getElementById('error');
+
+        googleLoginBtn.addEventListener('click', async () => {
+            try {
+                errorDiv.style.display = 'none';
+                googleLoginBtn.style.display = 'none';
+                loading.style.display = 'block';
+
+                const googleToken = await window.electronAPI.googleAuth();
+                
+                const response = await window.electronAPI.apiFetch('/auth/google', {
+                    method: 'POST',
+                    body: JSON.stringify({ token: googleToken })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Authentication failed');
+                }
+
+                const data = response.data;
+                
+                await window.electronAPI.storeToken(data.access_token);
+                await window.electronAPI.storeUser(data.user);
+
+                if (data.user.is_profile_complete) {
+                    window.location.href = 'home.html';
+                } else {
+                    window.location.href = 'profile-completion.html';
+                }
+
+            } catch (error) {
+                console.error('Login error:', error);
+                errorDiv.textContent = 'Connection failed. Please try again.';
+                errorDiv.style.display = 'block';
+                googleLoginBtn.style.display = 'flex';
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

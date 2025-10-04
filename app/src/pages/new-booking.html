@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observation Booking - StellarScope</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: linear-gradient(180deg, #0a0e27 0%, #1a2a44 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            color: #e2e8f0;
+        }
+
+        /* Starfield with layered animation */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: #ffffff;
+            border-radius: 50%;
+            opacity: 0.5;
+        }
+
+        .star--small { width: 1px; height: 1px; animation: twinkle 4s infinite; }
+        .star--medium { width: 2px; height: 2px; animation: twinkle 6s infinite; }
+        .star--large { width: 3px; height: 3px; animation: twinkle 8s infinite; }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.9; }
+        }
+
+        /* Cosmic particle effect */
+        .particle {
+            position: absolute;
+            background: rgba(59, 130, 246, 0.7);
+            width: 2px;
+            height: 2px;
+            border-radius: 50%;
+            animation: meteor 5s linear infinite;
+        }
+
+        @keyframes meteor {
+            0% { transform: translate(0, 0); opacity: 1; }
+            100% { transform: translate(-200px, 200px); opacity: 0; }
+        }
+
+        .header {
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(12px);
+            padding: 24px 40px;
+            box-shadow: 0 4px 20px rgba(79, 172, 254, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            position: relative;
+            z-index: 10;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.4);
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #3b82f6 0%, #6b7280 100%);
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        .header-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #e2e8f0;
+            text-shadow: 0 0 10px rgba(59, 172, 254, 0.5);
+        }
+
+        .content {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 32px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 60px;
+            gap: 20px;
+        }
+
+        .step {
+            width: 80px;
+            height: 8px;
+            background: rgba(59, 130, 246, 0.2);
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.7);
+        }
+
+        .card {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(15px);
+            padding: 48px;
+            border-radius: 16px;
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.25);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 32px;
+            font-weight: 700;
+            color: #e2e8f0;
+            text-align: center;
+            margin-bottom: 16px;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
+        }
+
+        .card-subtitle {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        /* Orbital Dial */
+        .dial-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+            margin: 0 auto 48px;
+        }
+
+        .dial-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 180px;
+            height: 180px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.4) 0%, rgba(10, 14, 39, 0.95) 70%);
+            border-radius: 50%;
+            border: 2px solid rgba(59, 130, 246, 0.6);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5;
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5);
+        }
+
+        .dial-center-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 12px;
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .dial-center-text {
+            color: #60a5fa;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .dial-ring {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            animation: orbit 50s linear infinite;
+        }
+
+        @keyframes orbit {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .category-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 140px;
+            height: 140px;
+            margin-left: -70px;
+            margin-top: -70px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-item::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 200px;
+            height: 200px;
+            border: 1px dashed rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+        }
+
+        .category-item:hover {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        .category-button {
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.5) 0%, rgba(15, 23, 42, 0.9) 70%);
+            border: 2px solid rgba(59, 130, 246, 0.7);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: orbit 50s linear infinite reverse;
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover .category-button {
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.8) 0%, rgba(15, 23, 42, 0.9) 70%);
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.7);
+            border-color: #3b82f6;
+        }
+
+        .category-icon {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 8px;
+        }
+
+        .category-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            text-transform: uppercase;
+            text-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+        }
+
+        /* Orbital Carousel */
+        .carousel-container {
+            display: none;
+            margin-top: 32px;
+            padding: 24px;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 16px;
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            box-shadow: 0 8px 40px rgba(59, 130, 246, 0.25);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-container.show {
+            display: block;
+        }
+
+        .carousel-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .carousel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .carousel-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #e2e8f0;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .carousel-back {
+            background: rgba(220, 38, 38, 0.2);
+            border: 2px solid #dc2626;
+            color: #dc2626;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .carousel-back:hover {
+            background: rgba(220, 38, 38, 0.4);
+            box-shadow: 0 0 15px rgba(220, 38, 38, 0.5);
+        }
+
+        .carousel-section {
+            margin-bottom: 32px;
+        }
+
+        .carousel-subtitle {
+            font-size: 18px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .carousel-track {
+            display: flex;
+            overflow-x: auto;
+            scroll-behavior: smooth;
+            padding: 16px 0;
+            gap: 16px;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(59, 130, 246, 0.5) rgba(15, 23, 42, 0.5);
+        }
+
+        .carousel-track::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .carousel-track::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .carousel-track::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 4px;
+        }
+
+        .carousel-track::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+
+        .carousel-item {
+            flex: 0 0 160px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            padding: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-size: 16px;
+            color: #e2e8f0;
+            transform: perspective(500px) rotateY(5deg);
+        }
+
+        .carousel-item:hover {
+            background: rgba(59, 130, 246, 0.25);
+            border-color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+            transform: perspective(500px) rotateY(0deg) translateY(-3px);
+        }
+
+        .carousel-item.selected {
+            background: linear-gradient(135deg, #3b82f6 0%, #6b7280 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+            transform: perspective(500px) rotateY(0deg);
+        }
+
+        .selected-display {
+            background: rgba(59, 130, 246, 0.15);
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 32px;
+            display: none;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .selected-display.show {
+            display: block;
+        }
+
+        .selected-label {
+            font-size: 16px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
+        .selected-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: #e2e8f0;
+            text-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 48px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #6b7280 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 30px rgba(59, 130, 246, 0.6);
+        }
+
+        .btn-secondary {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+            border: 2px solid #60a5fa;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(59, 130, 246, 0.3);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .action-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .action-card {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            padding: 32px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .action-card:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .action-card.selected {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(107, 114, 128, 0.4) 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+        }
+
+        .action-icon {
+            width: 56px;
+            height: 56px;
+            margin-bottom: 16px;
+        }
+
+        .action-title {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #e2e8f0;
+            font-size: 22px;
+        }
+
+        .action-desc {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+
+        .satellite-grid {
+            display: grid;
+            gap: 20px;
+        }
+
+        .satellite-card {
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.3);
+            padding: 28px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .satellite-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 10% 10%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .satellite-card:hover {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+            box-shadow: 0 8px 30px rgba(59, 130, 246, 0.4);
+        }
+
+        .satellite-card.selected {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.4) 0%, rgba(107, 114, 128, 0.4) 100%);
+            border-color: #3b82f6;
+            box-shadow: 0 0 40px rgba(59, 130, 246, 0.6);
+        }
+
+        .satellite-name {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #e2e8f0;
+            font-size: 20px;
+        }
+
+        .satellite-details {
+            font-size: 14px;
+            color: #94a3b8;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .satellite-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .error {
+            color: #dc2626;
+            font-size: 16px;
+            margin-top: 20px;
+            display: none;
+            text-align: center;
+            padding: 16px;
+            background: rgba(220, 38, 38, 0.1);
+            border-radius: 10px;
+            border: 1px solid rgba(220, 38, 38, 0.3);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 14, 39, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            backdrop-filter: blur(12px);
+        }
+
+        .loading-card {
+            background: rgba(15, 23, 42, 0.95);
+            padding: 56px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 50px rgba(59, 130, 246, 0.3);
+        }
+
+        .spinner {
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #60a5fa;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(59, 130, 246, 0.5);
+            border-radius: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(59, 130, 246, 0.8);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .dial-container {
+                width: 400px;
+                height: 400px;
+            }
+
+            .category-item {
+                width: 100px;
+                height: 100px;
+                margin-left: -50px;
+                margin-top: -50px;
+            }
+
+            .category-item::before {
+                width: 140px;
+                height: 140px;
+            }
+
+            .category-icon {
+                width: 36px;
+                height: 36px;
+            }
+
+            .category-label {
+                font-size: 12px;
+            }
+
+            .action-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 32px;
+            }
+
+            .carousel-container {
+                padding: 16px;
+            }
+
+            .carousel-item {
+                flex: 0 0 140px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .dial-container {
+                width: 300px;
+                height: 300px;
+            }
+
+            .dial-center {
+                width: 120px;
+                height: 120px;
+            }
+
+            .dial-center-icon {
+                width: 40px;
+                height: 40px;
+            }
+
+            .dial-center-text {
+                font-size: 12px;
+            }
+
+            .header-title {
+                font-size: 20px;
+            }
+
+            .card-title {
+                font-size: 24px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                font-size: 16px;
+            }
+
+            .carousel-item {
+                flex: 0 0 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Starfield and Particles -->
+    <div class="stars" id="stars"></div>
+
+    <div class="header">
+        <button class="back-btn" onclick="window.location.href='home.html'">←</button>
+        <div class="header-title">Observation Booking</div>
+    </div>
+
+    <div class="content">
+        <div class="step-indicator">
+            <div class="step active" id="step1"></div>
+            <div class="step" id="step2"></div>
+            <div class="step" id="step3"></div>
+        </div>
+
+        <!-- Step 1: Select Object -->
+        <div class="card" id="objectStep">
+            <div class="card-title">Select Celestial Target</div>
+            <div class="card-subtitle">Navigate our cosmic catalog</div>
+            
+            <div class="selected-display" id="selectedDisplay">
+                <div class="selected-label">Selected Target:</div>
+                <div class="selected-value" id="selectedObjectName"></div>
+            </div>
+
+            <div class="dial-container">
+                <div class="dial-center">
+                    <svg class="dial-center-icon" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="2">
+                        <path d="M12 2a10 10 0 0 1 10 10 10 10 0 0 1-10 10A10 10 0 0 1 2 12 10 10 0 0 1 12 2m0 4v12m-4-4h8"/>
+                    </svg>
+                    <div class="dial-center-text">Choose Category</div>
+                </div>
+                <div class="dial-ring" id="dialRing"></div>
+            </div>
+
+            <div class="carousel-container" id="carouselContainer">
+                <div class="carousel-header">
+                    <div class="carousel-title" id="carouselTitle"></div>
+                    <button class="carousel-back" onclick="closeCarousel()">Back to Categories</button>
+                </div>
+                <div id="carouselBody"></div>
+            </div>
+
+            <div class="error" id="objectError"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="goToActionStep()">Continue Mission</button>
+            </div>
+        </div>
+
+        <!-- Step 2: Select Action -->
+        <div class="card hidden" id="actionStep">
+            <div class="card-title">Mission Type</div>
+            <div class="card-subtitle">Choose your observation method</div>
+            
+            <div class="action-cards">
+                <div class="action-card" data-action="photograph" onclick="selectAction('photograph')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                        <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <div class="action-title">Photograph</div>
+                    <div class="action-desc">Capture high-resolution imagery</div>
+                </div>
+                <div class="action-card" data-action="track" onclick="selectAction('track')">
+                    <svg class="action-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                        <path d="M12 2v6m0 8v6m10-10h-6M8 12H2"/>
+                        <circle cx="12" cy="12" r="10"/>
+                    </svg>
+                    <div class="action-title">Track</div>
+                    <div class="action-desc">Monitor trajectory and patterns</div>
+                </div>
+            </div>
+
+            <div class="error" id="actionError"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="backToObjectStep()">Back</button>
+                <button class="btn btn-primary" onclick="goToSatelliteStep()">Select Satellite</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Select Satellite -->
+        <div class="card hidden" id="satelliteStep">
+            <div class="card-title">Observatory Satellites</div>
+            <div class="card-subtitle">Mission control will notify you upon completion</div>
+            
+            <div class="satellite-grid" id="satelliteGrid"></div>
+
+            <div class="error" id="satelliteError"></div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" onclick="backToActionStep()">Back</button>
+                <button class="btn btn-primary" onclick="confirmBooking()">Launch Mission</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-card">
+            <div class="spinner"></div>
+            <div class="loading-text">Initiating observation sequence...</div>
+        </div>
+    </div>
+
+    <script>
+        // Mock satellite data for fallback (unchanged from original)
+        const mockSatellites = [
+            { id: 1, name: "AstroVision-1", designation: "AV-001", orbit_altitude: 550.0, resolution: 0.5, is_active: true },
+            { id: 2, name: "SkyWatch-2", designation: "SW-002", orbit_altitude: 620.0, resolution: 0.4, is_active: true },
+            { id: 3, name: "OrbitEye-3", designation: "OE-003", orbit_altitude: 680.0, resolution: 0.3, is_active: true }
+        ];
+
+        // Generate starfield and particles
+        const starsContainer = document.getElementById('stars');
+        for (let i = 0; i < 200; i++) {
+            const star = document.createElement('div');
+            const size = Math.random();
+            star.className = `star star--${size < 0.3 ? 'small' : size < 0.7 ? 'medium' : 'large'}`;
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 8 + 's';
+            starsContainer.appendChild(star);
+        }
+        for (let i = 0; i < 20; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDelay = Math.random() * 5 + 's';
+            starsContainer.appendChild(particle);
+        }
+
+        const celestialObjects = {
+            "Solar System": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 2a15 15 0 0 1 0 20"/>
+                </svg>`,
+                subcategories: {
+                    "Planets": ["Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"],
+                    "Dwarf Planets": ["Pluto", "Ceres", "Eris", "Haumea", "Makemake"],
+                    "Moons of Mars": ["Phobos", "Deimos"],
+                    "Moons of Jupiter": ["Io", "Europa", "Ganymede", "Callisto"],
+                    "Moons of Saturn": ["Titan", "Enceladus", "Rhea", "Iapetus"],
+                    "Asteroids": ["Vesta", "Pallas", "Hygiea", "Apophis", "Bennu"],
+                    "Comets": ["Halley's Comet", "Comet Hale-Bopp", "Comet Borrelly"]
+                }
+            },
+            "Stars": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z"/>
+                </svg>`,
+                subcategories: {
+                    "Bright Stars": ["Sirius", "Betelgeuse", "Vega", "Rigel", "Proxima Centauri", "Polaris"]
+                }
+            },
+            "Exoplanets": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <circle cx="12" cy="12" r="8"/><path d="M12 4a12 12 0 0 1 0 16"/>
+                </svg>`,
+                subcategories: {
+                    "Notable Exoplanets": ["Proxima b", "TRAPPIST-1e", "Kepler-452b", "HD 189733b", "51 Pegasi b"]
+                }
+            },
+            "Galaxies": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <path d="M12 3a9 9 0 0 0-9 9 9 9 0 0 0 9 9 9 9 0 0 0 9-9 9 9 0 0 0-9-9zm0 2a7 7 0 0 1 7 7"/>
+                </svg>`,
+                subcategories: {
+                    "Nearby Galaxies": ["Andromeda Galaxy", "Triangulum Galaxy", "Sombrero Galaxy", "Whirlpool Galaxy"]
+                }
+            },
+            "Nebulae": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <path d="M4 12a8 8 0 0 1 8-8 8 8 0 0 1 8 8 8 8 0 0 1-8 8 8 8 0 0 1-8-8zm4 0h8"/>
+                </svg>`,
+                subcategories: {
+                    "Famous Nebulae": ["Orion Nebula", "Crab Nebula", "Eagle Nebula", "Horsehead Nebula", "Carina Nebula"]
+                }
+            },
+            "Exotic": {
+                icon: `<svg class="category-icon" viewBox="0 0 24 24" fill="none" stroke="#e2e8f0" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 6v12m-6-6h12"/>
+                </svg>`,
+                subcategories: {
+                    "Black Holes & Pulsars": ["Sagittarius A*", "Cygnus X-1", "M87*", "PSR B1919+21"]
+                }
+            }
+        };
+
+        let selectedObject = null;
+        let selectedObjectCategory = null;
+        let selectedAction = null;
+        let selectedSatellite = null;
+        let satellites = [];
+
+        // Create rotating dial
+        function createDial() {
+            const dialRing = document.getElementById('dialRing');
+            const categories = Object.keys(celestialObjects);
+            const angleStep = 360 / categories.length;
+
+            categories.forEach((category, index) => {
+                const angle = angleStep * index;
+                const radius = 240;
+                const x = Math.cos((angle - 90) * Math.PI / 180) * radius;
+                const y = Math.sin((angle - 90) * Math.PI / 180) * radius;
+
+                const item = document.createElement('div');
+                item.className = 'category-item';
+                item.style.transform = `translate(${x}px, ${y}px)`;
+                item.onclick = () => openCarousel(category);
+
+                item.innerHTML = `
+                    <div class="category-button">
+                        ${celestialObjects[category].icon}
+                        <div class="category-label">${category}</div>
+                    </div>
+                `;
+
+                dialRing.appendChild(item);
+            });
+        }
+
+        function openCarousel(category) {
+            const carouselContainer = document.getElementById('carouselContainer');
+            const carouselTitle = document.getElementById('carouselTitle');
+            const carouselBody = document.getElementById('carouselBody');
+            const dialContainer = document.querySelector('.dial-container');
+
+            carouselTitle.textContent = category;
+            carouselBody.innerHTML = '';
+
+            Object.entries(celestialObjects[category].subcategories).forEach(([subcategory, objects]) => {
+                const section = document.createElement('div');
+                section.className = 'carousel-section';
+                
+                const title = document.createElement('div');
+                title.className = 'carousel-subtitle';
+                title.textContent = subcategory;
+                section.appendChild(title);
+
+                const track = document.createElement('div');
+                track.className = 'carousel-track';
+
+                objects.forEach(obj => {
+                    const item = document.createElement('div');
+                    item.className = 'carousel-item';
+                    item.textContent = obj;
+                    item.onclick = () => selectObject(obj, category);
+                    track.appendChild(item);
+                });
+
+                section.appendChild(track);
+                carouselBody.appendChild(section);
+            });
+
+            dialContainer.style.display = 'none';
+            carouselContainer.classList.add('show');
+        }
+
+        function closeCarousel() {
+            const carouselContainer = document.getElementById('carouselContainer');
+            const dialContainer = document.querySelector('.dial-container');
+            carouselContainer.classList.remove('show');
+            dialContainer.style.display = 'block';
+        }
+
+        function selectObject(objectName, category) {
+            selectedObject = objectName;
+            selectedObjectCategory = category;
+            
+            document.querySelectorAll('.carousel-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+
+            document.getElementById('selectedObjectName').textContent = objectName;
+            document.getElementById('selectedDisplay').classList.add('show');
+            document.getElementById('objectError').style.display = 'none';
+
+            setTimeout(() => closeCarousel(), 800);
+        }
+
+        function selectAction(action) {
+            selectedAction = action;
+            document.querySelectorAll('.action-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-action="${action}"]`).classList.add('selected');
+            document.getElementById('actionError').style.display = 'none';
+        }
+
+        function selectSatellite(id) {
+            selectedSatellite = id;
+            document.querySelectorAll('.satellite-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            document.querySelector(`[data-satellite="${id}"]`).classList.add('selected');
+            document.getElementById('satelliteError').style.display = 'none';
+        }
+
+        function goToActionStep() {
+            if (!selectedObject) {
+                document.getElementById('objectError').textContent = 'Please select a celestial object to observe';
+                document.getElementById('objectError').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('objectStep').classList.add('hidden');
+            document.getElementById('actionStep').classList.remove('hidden');
+            document.getElementById('step2').classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function backToObjectStep() {
+            document.getElementById('actionStep').classList.add('hidden');
+            document.getElementById('objectStep').classList.remove('hidden');
+            document.getElementById('step2').classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+
+        async function goToSatelliteStep() {
+            if (!selectedAction) {
+                document.getElementById('actionError').textContent = '⚠️ Please select a mission type';
+                document.getElementById('actionError').style.display = 'block';
+                return;
+            }
+
+            try {
+                const response = await window.electronAPI.apiFetch('/satellites/nearest?limit=3', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load satellites');
+                }
+
+                satellites = response.data;
+                displaySatellites(satellites);
+
+                document.getElementById('actionStep').classList.add('hidden');
+                document.getElementById('satelliteStep').classList.remove('hidden');
+                document.getElementById('step3').classList.add('active');
+                window.scrollTo(0, 0);
+            } catch (error) {
+                console.error('Error loading satellites:', error);
+                document.getElementById('actionError').textContent = '⚠️ Failed to load satellites. Please try again.';
+                document.getElementById('actionError').style.display = 'block';
+            }
+        }
+
+        function displaySatellites(satellites) {
+            const grid = document.getElementById('satelliteGrid');
+            grid.innerHTML = '';
+
+            satellites.forEach(sat => {
+                const card = document.createElement('div');
+                card.className = 'satellite-card';
+                card.setAttribute('data-satellite', sat.id);
+                card.onclick = () => selectSatellite(sat.id);
+
+                card.innerHTML = `
+                    <div class="satellite-info">
+                        <div class="satellite-name">🛰️ ${sat.name}</div>
+                        <div class="satellite-details">
+                            <span>📡 ${sat.designation}</span>
+                            <span>🌍 ${sat.orbit_altitude}km altitude</span>
+                            <span>📸 ${sat.resolution}m/px resolution</span>
+                        </div>
+                    </div>
+                    <div class="satellite-badge">✓ Available</div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function backToActionStep() {
+            document.getElementById('satelliteStep').classList.add('hidden');
+            document.getElementById('actionStep').classList.remove('hidden');
+            document.getElementById('step3').classList.remove('active');
+            window.scrollTo(0, 0);
+        }
+
+        async function confirmBooking() {
+            if (!selectedSatellite) {
+                document.getElementById('satelliteError').textContent = '⚠️ Please select a satellite for your mission';
+                document.getElementById('satelliteError').style.display = 'block';
+                return;
+            }
+
+            const bookingData = {
+                object_name: selectedObject,
+                object_type: selectedObjectCategory,
+                booking_type: selectedAction,
+                satellite_id: selectedSatellite
+            };
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            try {
+                const response = await window.electronAPI.apiFetch('/bookings', {
+                    method: 'POST',
+                    body: JSON.stringify(bookingData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(response.data?.detail || 'Failed to create booking');
+                }
+
+                alert('🚀 Mission Confirmed! You will be notified when observation is complete.');
+                window.location.href = 'home.html';
+
+            } catch (error) {
+                console.error('Booking error:', error);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('satelliteError').textContent = '⚠️ ' + (error.message || 'Failed to create booking. Please try again.');
+                document.getElementById('satelliteError').style.display = 'block';
+            }
+        }
+
+        // Initialize dial
+        createDial();
+    </script>
+</body>
+</html>

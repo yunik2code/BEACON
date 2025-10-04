@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BEACON</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #4285f4;
+            --accent: #ea4335;
+            --success: #34a853;
+            --warning: #fbbc05;
+            --dark: #0a0a1a;
+            --darker: #050514;
+            --light: #f8f9fa;
+            --gray: #5f6368;
+            --light-gray: #f1f3f4;
+            --border: #dadce0;
+            --card-bg: rgba(255, 255, 255, 0.08);
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --star-color: rgba(255, 255, 255, 0.9);
+            --nebula-color: rgba(102, 126, 234, 0.2);
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(145deg, var(--darker) 0%, var(--dark) 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            padding-top: 85px;
+        }
+
+        /* Enhanced space background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                radial-gradient(2px 2px at 20px 30px, var(--star-color), transparent),
+                radial-gradient(2px 2px at 60px 70px, var(--star-color), transparent),
+                radial-gradient(1px 1px at 50px 50px, rgba(255, 255, 255, 0.5), transparent),
+                radial-gradient(1px 1px at 130px 80px, var(--star-color), transparent),
+                radial-gradient(2px 2px at 90px 10px, rgba(79, 195, 247, 0.8), transparent);
+            background-repeat: repeat;
+            background-size: 200px 200px;
+            animation: twinkle 5s ease-in-out infinite;
+            z-index: -2;
+            pointer-events: none;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at top left, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+                radial-gradient(ellipse at bottom right, rgba(79, 195, 247, 0.15) 0%, transparent 50%);
+            z-index: -1;
+            pointer-events: none;
+            animation: nebulaPulse 10s ease-in-out infinite;
+        }
+
+        @keyframes nebulaPulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 0.8; }
+        }
+
+        .orbital-path {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        .orbital-path::before {
+            content: '';
+            position: absolute;
+            width: 250px;
+            height: 250px;
+            top: 15%;
+            right: 10%;
+            border: 2px solid rgba(102, 126, 234, 0.15);
+            border-radius: 50%;
+            animation: orbit 35s linear infinite;
+        }
+
+        .orbital-path::after {
+            content: '';
+            position: absolute;
+            width: 350px;
+            height: 350px;
+            bottom: 10%;
+            left: 5%;
+            border: 1px solid rgba(79, 195, 247, 0.1);
+            border-radius: 50%;
+            animation: orbit 50s linear infinite reverse;
+        }
+
+        @keyframes orbit {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        /* Sleek minimal navbar */
+        .header {
+            background: linear-gradient(90deg, rgba(10, 10, 26, 0.95), rgba(15, 15, 35, 0.95));
+            backdrop-filter: blur(20px) saturate(180%);
+            padding: 20px 50px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+        }
+
+        .logo {
+            font-size: 28px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            letter-spacing: 1.5px;
+            background: linear-gradient(90deg, #4fc3f7, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            color: #4fc3f7;
+            animation: pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.6));
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px 18px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 50px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition);
+        }
+
+        .user-info:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+
+        .user-avatar {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 2px solid rgba(79, 195, 247, 0.5);
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .user-avatar:hover {
+            transform: scale(1.05);
+            border-color: #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.4);
+        }
+
+        .user-name {
+            font-size: 16px;
+            font-weight: 600;
+            background: linear-gradient(90deg, #4fc3f7, #667eea);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, rgba(234, 67, 53, 0.2), rgba(197, 57, 41, 0.2));
+            color: #ef5350;
+            border: 1px solid rgba(234, 67, 53, 0.3);
+            padding: 10px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logout-btn:hover {
+            background: linear-gradient(135deg, rgba(234, 67, 53, 0.3), rgba(197, 57, 41, 0.3));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(234, 67, 53, 0.3);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 30px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Welcome hero section */
+        .welcome-section {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.15) 0%, rgba(102, 126, 234, 0.15) 100%);
+            color: white;
+            padding: 50px 45px;
+            border-radius: 24px;
+            margin-bottom: 35px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .welcome-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.2) 0%, transparent 70%);
+            animation: float 8s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-30px, -30px) rotate(10deg); }
+        }
+
+        .welcome-section-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .welcome-section h1 {
+            font-size: 44px;
+            margin-bottom: 18px;
+            font-weight: 700;
+            background: linear-gradient(90deg, #4fc3f7, #667eea, #4fc3f7);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .welcome-section p {
+            font-size: 18px;
+            color: #b0b0d0;
+            max-width: 750px;
+            line-height: 1.6;
+        }
+
+        /* Stats grid with enhanced cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 35px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 0.6s ease-out backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #4fc3f7, transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(79, 195, 247, 0.3);
+            border-color: rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-icon {
+            font-size: 42px;
+            margin-bottom: 18px;
+            color: #4fc3f7;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 70px;
+            height: 70px;
+            background: rgba(79, 195, 247, 0.15);
+            border-radius: 50%;
+            transition: var(--transition);
+            filter: drop-shadow(0 4px 12px rgba(79, 195, 247, 0.3));
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(5deg);
+            filter: drop-shadow(0 6px 16px rgba(79, 195, 247, 0.5));
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(79, 195, 247, 0.3);
+        }
+
+        .stat-label {
+            color: #b0b0d0;
+            font-size: 15px;
+            font-weight: 500;
+        }
+
+        /* Enhanced actions section */
+        .actions-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            margin-bottom: 35px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .actions-section h2 {
+            margin-bottom: 28px;
+            color: white;
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .actions-section h2 i {
+            color: #4fc3f7;
+            filter: drop-shadow(0 0 10px rgba(79, 195, 247, 0.5));
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, rgba(79, 195, 247, 0.2) 0%, rgba(102, 126, 234, 0.2) 100%);
+            color: white;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+            padding: 26px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .action-btn:hover::before {
+            left: 100%;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: 0 10px 35px rgba(79, 195, 247, 0.4);
+            border-color: rgba(79, 195, 247, 0.5);
+        }
+
+        .action-btn-icon {
+            font-size: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background: rgba(79, 195, 247, 0.2);
+            border-radius: 50%;
+            transition: var(--transition);
+            filter: drop-shadow(0 4px 8px rgba(79, 195, 247, 0.3));
+        }
+
+        .action-btn:hover .action-btn-icon {
+            transform: rotate(10deg) scale(1.1);
+            filter: drop-shadow(0 6px 12px rgba(79, 195, 247, 0.5));
+        }
+
+        .action-btn span {
+            font-weight: 600;
+            font-size: 17px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Recent bookings section */
+        .recent-section {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            animation: fadeIn 1s ease-out;
+        }
+
+        .recent-section h2 {
+            margin-bottom: 28px;
+            color: white;
+            font-size: 26px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .recent-section h2 i {
+            color: #4fc3f7;
+            filter: drop-shadow(0 0 10px rgba(79, 195, 247, 0.5));
+        }
+
+        .booking-item {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(30, 30, 50, 0.3);
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .booking-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #4fc3f7, #667eea);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .booking-item:hover::before {
+            opacity: 1;
+        }
+
+        .booking-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(79, 195, 247, 0.3);
+        }
+
+        .booking-info h3 {
+            font-size: 19px;
+            margin-bottom: 10px;
+            color: white;
+            font-weight: 600;
+        }
+
+        .booking-meta {
+            font-size: 14px;
+            color: #b0b0d0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .booking-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .booking-meta-item i {
+            color: #4fc3f7;
+        }
+
+        .booking-status {
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: capitalize;
+            backdrop-filter: blur(10px);
+        }
+
+        .status-pending {
+            background: rgba(255, 193, 7, 0.2);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+        }
+
+        .status-confirmed {
+            background: rgba(52, 168, 83, 0.2);
+            color: #66bb6a;
+            border: 1px solid rgba(52, 168, 83, 0.3);
+        }
+
+        .status-in_progress {
+            background: rgba(79, 195, 247, 0.2);
+            color: #4fc3f7;
+            border: 1px solid rgba(79, 195, 247, 0.3);
+        }
+
+        .status-completed {
+            background: rgba(52, 168, 83, 0.2);
+            color: #66bb6a;
+            border: 1px solid rgba(52, 168, 83, 0.3);
+        }
+
+        .status-cancelled {
+            background: rgba(234, 67, 53, 0.2);
+            color: #ef5350;
+            border: 1px solid rgba(234, 67, 53, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 30px;
+            color: #a0a0c0;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.4));
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 30px;
+            color: #a0a0c0;
+        }
+
+        .loading i {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: #4fc3f7;
+            animation: pulse 2s infinite;
+            filter: drop-shadow(0 0 15px rgba(79, 195, 247, 0.5));
+        }
+
+        .profile-incomplete-banner {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 160, 0, 0.15));
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            padding: 20px 28px;
+            border-radius: 16px;
+            margin-bottom: 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(15px);
+            animation: fadeInDown 0.6s ease-out;
+        }
+
+        .profile-incomplete-banner span {
+            color: #ffc107;
+            font-weight: 500;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .profile-incomplete-banner button {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.3), rgba(255, 160, 0, 0.3));
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            padding: 10px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            color: #ffc107;
+            transition: var(--transition);
+        }
+
+        .profile-incomplete-banner button:hover {
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.4), rgba(255, 160, 0, 0.4));
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 193, 7, 0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                padding: 18px 25px;
+            }
+            
+            .logo {
+                font-size: 24px;
+            }
+            
+            .user-menu {
+                gap: 15px;
+            }
+
+            .user-name {
+                display: none;
+            }
+            
+            .welcome-section {
+                padding: 35px 30px;
+            }
+            
+            .welcome-section h1 {
+                font-size: 32px;
+            }
+            
+            .welcome-section p {
+                font-size: 16px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .booking-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .welcome-section {
+                padding: 25px 20px;
+            }
+            
+            .welcome-section h1 {
+                font-size: 28px;
+            }
+            
+            .actions-section, .recent-section {
+                padding: 25px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="orbital-path"></div>
+    
+    <div class="header">
+        <div class="logo">
+            <img src="../assets/logo1.png" alt="Website Logo" width="50" height="50">
+            <span><b>BEACON</b></span>
+        </div>
+        <div class="user-menu">
+            <div class="user-info">
+                <img id="userAvatar" class="user-avatar" alt="User" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 24 24'%3E%3Cpath fill='%231a73e8' d='M12,12c2.21,0,4-1.79,4-4s-1.79-4-4-4s-4,1.79-4,4S9.79,12,12,12z M12,14c-2.67,0-8,1.34-8,4v2h16v-2C20,15.34,14.67,14,12,14z'/%3E%3C/svg%3E">
+                <span class="user-name" id="userName">Loading...</span>
+            </div>
+            <button class="logout-btn" id="logoutBtn">
+                <i class="fas fa-sign-out-alt"></i>
+                Logout
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="incompleteProfileBanner" style="display: none;" class="profile-incomplete-banner">
+            <span><i class="fas fa-exclamation-triangle"></i> Your profile is incomplete. Complete it to unlock all features.</span>
+            <button onclick="window.location.href='profile-completion.html'">Complete Now</button>
+        </div>
+
+        <div class="welcome-section">
+            <div class="welcome-section-content">
+                <h1 id="welcomeText">Welcome back!</h1>
+                <p>Manage your satellite bookings and explore Earth from space with our advanced satellite network ARGUS</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="stat-value" id="activeBookingsCount">0</div>
+                <div class="stat-label">Active Bookings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-images"></i>
+                </div>
+                <div class="stat-value" id="imagesCapturedCount">50+</div>
+                <div class="stat-label">Images Captured</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-satellite"></i>
+                </div>
+                <div class="stat-value">32</div>
+                <div class="stat-label">Available Satellites</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="stat-value">24/7</div>
+                <div class="stat-label">Support Available</div>
+            </div>
+        </div>
+
+        <div class="actions-section">
+            <h2><i class="fas fa-rocket"></i> Quick Actions</h2>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="window.location.href='new-booking.html'">
+                    <div class="action-btn-icon">
+                        <i class="fas fa-plus-circle"></i>
+                    </div>
+                    <span>New Booking</span>
+                </button>
+                <button class="action-btn" onclick="window.location.href='bookings.html'">
+                    <div class="action-btn-icon">
+                        <i class="fas fa-list"></i>
+                    </div>
+                    <span>My Bookings</span>
+                </button>
+                <button class="action-btn" onclick="window.location.href='satellites.html'">
+                    <div class="action-btn-icon">
+                        <i class="fas fa-globe-americas"></i>
+                    </div>
+                    <span>Browse ARGUS</span>
+                </button>
+                <button class="action-btn" onclick="window.location.href='profile-completion.html'">
+                    <div class="action-btn-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <span>Update Profile</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="recent-section">
+            <h2><i class="fas fa-history"></i> Recent Bookings</h2>
+            <div id="recentBookings">
+                <div class="loading">
+                    <i class="fas fa-satellite"></i>
+                    <p>Loading bookings...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let allBookings = [];
+
+        async function loadUserData() {
+            try {
+                const user = await window.electronAPI.getUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                currentUser = user;
+                document.getElementById('userName').textContent = user.full_name || user.email;
+                document.getElementById('welcomeText').textContent = `Welcome back, ${user.full_name?.split(' ')[0] || 'there'}!`;
+                
+                const avatar = document.getElementById('userAvatar');
+                if (user.profile_picture) {
+                    avatar.src = user.profile_picture;
+                }
+
+                if (!user.is_profile_complete) {
+                    document.getElementById('incompleteProfileBanner').style.display = 'flex';
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                window.location.href = 'login.html';
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await window.electronAPI.clearToken();
+                window.location.href = 'login.html';
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        });
+
+        async function loadRecentBookings() {
+            const container = document.getElementById('recentBookings');
+            
+            try {
+                const response = await window.electronAPI.apiFetch('/bookings', {
+                    method: 'GET'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to load bookings');
+                }
+
+                allBookings = response.data;
+                
+                const activeBookings = allBookings.filter(booking => 
+                    booking.status === 'pending' || booking.status === 'confirmed'
+                );
+                document.getElementById('activeBookingsCount').textContent = activeBookings.length;
+                
+                const imagesCaptured = allBookings.filter(booking => 
+                    booking.status === 'completed' && booking.booking_type === 'photograph'
+                );
+                document.getElementById('imagesCapturedCount').textContent = imagesCaptured.length;
+
+                if (allBookings.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-inbox"></i>
+                            </div>
+                            <p>No bookings yet. Start by creating your first booking!</p>
+                        </div>
+                    `;
+                } else {
+                    container.innerHTML = allBookings.slice(0, 3).map(booking => `
+                        <div class="booking-item">
+                            <div class="booking-info">
+                                <h3>${booking.object_name} (${booking.object_type})</h3>
+                                <div class="booking-meta">
+                                    <div class="booking-meta-item">
+                                        <i class="fas fa-${booking.booking_type === 'photograph' ? 'camera' : 'route'}"></i>
+                                        ${booking.booking_type === 'photograph' ? 'Photography' : 'Tracking'}
+                                    </div>
+                                    <div class="booking-meta-item">
+                                        <i class="fas fa-satellite"></i>
+                                        ${booking.satellite.name}
+                                    </div>
+                                    <div class="booking-meta-item">
+                                        <i class="far fa-clock"></i>
+                                        ${new Date(booking.scheduled_time).toLocaleString()}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="booking-status status-${booking.status}">
+                                ${booking.status.replace('_', ' ')}
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <p>Failed to load bookings. Please try again later.</p>
+                    </div>
+                `;
+            }
+        }
+
+        window.addEventListener('load', () => {
+            loadUserData();
+            loadRecentBookings();
+        });
+    </script>
+</body>
+</html>
