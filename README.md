@@ -78,10 +78,6 @@ pip install -r requirements.txt
 
 Create a `.env` file in the `app_backend` directory:
 
-```bash
-cp .env.example .env
-```
-
 Edit `.env` and add your configurations:
 
 ```env
