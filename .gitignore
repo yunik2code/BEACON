@@ -1,1 +1,37 @@
-.aider*
+# Node.js/Electron
+node_modules/
+dist/
+build/
+*.asar
+*.exe
+*.dmg
+*.app
+
+# Python/FastAPI
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+venv/
+env/
+*.egg-info/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Secrets
+.env
+*.env.*
+
+# Logs and Temp
+*.log
+*.tmp
+*.bak
+
+# OS/IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
