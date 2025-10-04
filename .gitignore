@@ -41,3 +41,7 @@ app_backend/venv/
 app_backend/__pycache__/
 **/*.db
 **/.env
+.env
+**/.env
+app/.env
+app_backend/.env
