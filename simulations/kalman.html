@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kalman Filter Satellite Tracker</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      height: 100vh;
+      background: #1a202c;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    #container {
+      width: 100%;
+      height: 100%;
+    }
+    .panel {
+      position: absolute;
+      background: rgba(26, 32, 44, 0.9);
+      backdrop-filter: blur(4px);
+      color: white;
+      padding: 1.25rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(75, 85, 99, 0.5);
+      max-width: 20rem;
+    }
+    .top-left { top: 1rem; left: 1rem; }
+    .top-right { top: 1rem; right: 1rem; }
+    .bottom-left { bottom: 1rem; left: 1rem; }
+    .title {
+      font-size: 1.25rem;
+      font-weight: bold;
+      background: linear-gradient(to right, #22d3ee, #3b82f6);
+      -webkit-background-clip: text;
+      color: transparent;
+    }
+    .button {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .button:hover { transform: scale(1.05); }
+    .solar-flare { background: linear-gradient(to right, #dc2626, #f97316); }
+    .solar-flare:hover { background: linear-gradient(to right, #b91c1c, #ea580c); }
+    .normal { background: linear-gradient(to right, #2563eb, #1d4ed8); }
+    .normal:hover { background: linear-gradient(to right, #1e40af, #1e3a8a); }
+    .control-button { background: #374151; }
+    .control-button:hover { background: #4b5563; }
+    .stats-box {
+      background: #1f2937;
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+    }
+    .legend-item { display: flex; align-items: center; gap: 0.75rem; }
+    .range-label { font-size: 0.75rem; color: #9ca3af; }
+    input[type="range"] {
+      width: 100%;
+      accent-color: #22d3ee;
+    }
+    input[type="range"].q-range { accent-color: #a855f7; }
+  </style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <!-- Controls Panel -->
+  <div class="panel top-left">
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+      <h2 class="title">Kalman Filter Tracker</h2>
+      <div style="width: 0.75rem; height: 0.75rem; border-radius: 50%; background: #10b981; animation: pulse 2s infinite;"></div>
+    </div>
+    <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+      <button id="solarFlareBtn" class="button normal">🌙 Normal Conditions</button>
+      <div style="display: flex; gap: 0.5rem;">
+        <button id="pauseBtn" class="button control-button">⏸️ Pause</button>
+        <button id="resetBtn" class="button control-button">🔄</button>
+      </div>
+    </div>
+    <div style="border-top: 1px solid #4b5563; padding-top: 0.75rem; margin-top: 0.75rem;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; font-size: 0.875rem;">
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Meas. Noise (R)</div>
+          <div id="rValue" class="font-mono font-bold text-green-400">0.0100</div>
+        </div>
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Process (Q)</div>
+          <div id="qValue" class="font-mono font-bold text-gray-400">0.0010</div>
+        </div>
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Error</div>
+          <div id="error" class="font-mono font-bold text-yellow-400">0.000</div>
+        </div>
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Uncertainty</div>
+          <div id="uncertainty" class="font-mono font-bold text-cyan-400">0.000</div>
+        </div>
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Distance</div>
+          <div id="distance" class="font-mono font-bold text-green-400">0.00</div>
+        </div>
+        <div class="stats-box">
+          <div style="font-size: 0.75rem; color: #9ca3af;">Velocity</div>
+          <div id="velocity" class="font-mono font-bold text-purple-400">0.000</div>
+        </div>
+      </div>
+      <div class="stats-box" style="margin-top: 0.5rem;">
+        <div style="font-size: 0.75rem; color: #9ca3af;">Total Measurements</div>
+        <div id="measurements" class="font-mono font-bold text-gray-300">0</div>
+      </div>
+    </div>
+    <div style="margin-top: 0.75rem;">
+      <div>
+        <label class="range-label" id="rLabel">Measurement Noise (R): 0.0100</label>
+        <input type="range" id="rRange" min="0.001" max="0.1" step="0.001" value="0.01">
+      </div>
+      <div style="margin-top: 0.5rem;">
+        <label class="range-label" id="qLabel">Process Noise (Q): 0.0010</label>
+        <input type="range" id="qRange" class="q-range" min="0.0001" max="0.01" step="0.0001" value="0.001">
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend Panel -->
+  <div class="panel top-right">
+    <h3 style="font-weight: bold; color: #22d3ee; margin-bottom: 0.75rem;">Legend</h3>
+    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+      <div class="legend-item">
+        <div style="width: 1rem; height: 1rem; border-radius: 50%; background: #3b82f6; box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);"></div>
+        <span>Earth</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 1rem; height: 1rem; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);"></div>
+        <span>Satellite</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 1rem; height: 1rem; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);"></div>
+        <span>Target</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 3rem; height: 0.25rem; background: #facc15;"></div>
+        <span>True Path</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 3rem; height: 0.25rem; background: #ec4899;"></div>
+        <span>Noisy Data</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 3rem; height: 0.25rem; background: #22d3ee;"></div>
+        <span>Kalman Est.</span>
+      </div>
+      <div class="legend-item">
+        <div style="width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid #22d3ee; background: rgba(34, 211, 238, 0.2);"></div>
+        <span>Uncertainty</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Info Panel -->
+  <div class="panel bottom-left">
+    <p style="color: #22d3ee; font-weight: 600; margin-bottom: 0.5rem;">📡 Satellite Tracking System</p>
+    <p style="color: #d1d5db; margin-bottom: 0.75rem;">
+      Tracking a space object on hyperbolic flyby trajectory using Kalman filtering.
+    </p>
+    <div style="font-size: 0.75rem; color: #9ca3af;">
+      <p>• <span style="color: #f87171;">Solar Flares</span>: R ↑10x (noisy), Q ↓70% (trust model)</p>
+      <p>• <span style="color: #22d3ee;">Filter</span>: Balances predictions vs measurements</p>
+      <p>• <span style="color: #facc15;">Uncertainty</span>: Shows confidence in estimate</p>
+    </div>
+  </div>
+
+  <script>
+    // Kalman Filter class
+    class KalmanFilter {
+      constructor(dt = 0.1) {
+        this.dt = dt;
+        this.x = [0, 0, 0, 0];
+        this.P = [
+          [1, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ];
+      }
+
+      predict(Q) {
+        const F = [
+          [1, 0, this.dt, 0],
+          [0, 1, 0, this.dt],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ];
+        this.x = [
+          F[0][0] * this.x[0] + F[0][2] * this.x[2],
+          F[1][1] * this.x[1] + F[1][3] * this.x[3],
+          this.x[2],
+          this.x[3]
+        ];
+        const FP = this.matMul(F, this.P);
+        const FPFt = this.matMul(FP, this.transpose(F));
+        for (let i = 0; i < 4; i++) {
+          for (let j = 0; j < 4; j++) {
+            this.P[i][j] = FPFt[i][j] + (i === j ? Q : 0);
+          }
+        }
+      }
+
+      update(measurement, R) {
+        const H = [
+          [1, 0, 0, 0],
+          [0, 1, 0, 0]
+        ];
+        const innovation = [
+          measurement[0] - this.x[0],
+          measurement[1] - this.x[1]
+        ];
+        const HP = this.matMul(H, this.P);
+        const HPHt = this.matMul(HP, this.transpose(H));
+        const S = [
+          [HPHt[0][0] + R, HPHt[0][1]],
+          [HPHt[1][0], HPHt[1][1] + R]
+        ];
+        const Sinv = this.invert2x2(S);
+        const PHt = this.matMul(this.P, this.transpose(H));
+        const K = this.matMul(PHt, Sinv);
+        for (let i = 0; i < 4; i++) {
+          this.x[i] += K[i][0] * innovation[0] + K[i][1] * innovation[1];
+        }
+        const KH = this.matMul(K, H);
+        const I_KH = [
+          [1 - KH[0][0], -KH[0][1], -KH[0][2], -KH[0][3]],
+          [-KH[1][0], 1 - KH[1][1], -KH[1][2], -KH[1][3]],
+          [-KH[2][0], -KH[2][1], 1 - KH[2][2], -KH[2][3]],
+          [-KH[3][0], -KH[3][1], -KH[3][2], 1 - KH[3][3]]
+        ];
+        this.P = this.matMul(I_KH, this.P);
+      }
+
+      matMul(A, B) {
+        const result = Array(A.length).fill().map(() => Array(B[0].length));
+        for (let i = 0; i < A.length; i++) {
+          for (let j = 0; j < B[0].length; j++) {
+            result[i][j] = A[i].reduce((sum, val, k) => sum + val * B[k][j], 0);
+          }
+        }
+        return result;
+      }
+
+      transpose(A) {
+        return A[0].map((_, i) => A.map(row => row[i]));
+      }
+
+      invert2x2(A) {
+        const det = A[0][0] * A[1][1] - A[0][1] * A[1][0];
+        return [
+          [A[1][1] / det, -A[0][1] / det],
+          [-A[1][0] / det, A[0][0] / det]
+        ];
+      }
+
+      getUncertainty() {
+        return Math.sqrt(this.P[0][0] + this.P[1][1]);
+      }
+
+      reset() {
+        this.x = [0, 0, 0, 0];
+        this.P = [
+          [1, 0, 0, 0],
+          [0, 1, 0, 0],
+          [0, 0, 1, 0],
+          [0, 0, 0, 1]
+        ];
+      }
+    }
+
+    // Scene helper functions
+    function createOrbitPath(radius, color, scene) {
+      const points = [];
+      for (let i = 0; i <= 64; i++) {
+        const angle = (i / 64) * Math.PI * 2;
+        points.push(new THREE.Vector3(
+          Math.cos(angle) * radius,
+          0,
+          Math.sin(angle) * radius
+        ));
+      }
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({ 
+        color, 
+        transparent: true, 
+        opacity: 0.3 
+      });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      return line;
+    }
+
+    function createPathLine(color, scene) {
+      const geometry = new THREE.BufferGeometry();
+      const material = new THREE.LineBasicMaterial({ color, linewidth: 2 });
+      const line = new THREE.Line(geometry, material);
+      scene.add(line);
+      return { line, points: [] };
+    }
+
+    // Scene setup
+    const container = document.getElementById('container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000510);
+
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(20, 15, 20);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+    const sunLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    sunLight.position.set(15, 10, 5);
+    scene.add(sunLight);
+
+    // Earth
+    const earthGeometry = new THREE.SphereGeometry(2, 64, 64);
+    const earthMaterial = new THREE.MeshPhongMaterial({
+      color: 0x2244ff,
+      emissive: 0x112244,
+      shininess: 25,
+      specular: 0x333333
+    });
+    const earth = new THREE.Mesh(earthGeometry, earthMaterial);
+    scene.add(earth);
+
+    // Earth glow
+    const glowGeometry = new THREE.SphereGeometry(2.15, 32, 32);
+    const glowMaterial = new THREE.MeshBasicMaterial({
+      color: 0x4488ff,
+      transparent: true,
+      opacity: 0.2,
+      side: THREE.BackSide
+    });
+    const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+    scene.add(glow);
+
+    // Stars
+    const starsGeometry = new THREE.BufferGeometry();
+    const starVertices = [];
+    for (let i = 0; i < 1000; i++) {
+      const x = (Math.random() - 0.5) * 200;
+      const y = (Math.random() - 0.5) * 200;
+      const z = (Math.random() - 0.5) * 200;
+      starVertices.push(x, y, z);
+    }
+    starsGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+    const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff, size: 0.1 });
+    const stars = new THREE.Points(starsGeometry, starsMaterial);
+    scene.add(stars);
+
+    // Tracking satellite
+    const satGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+    const satMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0x00ff00, 
+      emissive: 0x00aa00,
+      shininess: 30
+    });
+    const trackingSatellite = new THREE.Mesh(satGeometry, satMaterial);
+    scene.add(trackingSatellite);
+
+    // Solar panels
+    const panelGeometry = new THREE.BoxGeometry(0.8, 0.05, 0.3);
+    const panelMaterial = new THREE.MeshPhongMaterial({ color: 0x2244aa, emissive: 0x001133 });
+    const panel1 = new THREE.Mesh(panelGeometry, panelMaterial);
+    panel1.position.set(0.5, 0, 0);
+    trackingSatellite.add(panel1);
+    const panel2 = new THREE.Mesh(panelGeometry, panelMaterial);
+    panel2.position.set(-0.5, 0, 0);
+    trackingSatellite.add(panel2);
+
+    // Target object
+    const targetGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+    const targetMaterial = new THREE.MeshPhongMaterial({ 
+      color: 0xff3300, 
+      emissive: 0xaa1100,
+      shininess: 20
+    });
+    const targetObject = new THREE.Mesh(targetGeometry, targetMaterial);
+    scene.add(targetObject);
+
+    // Orbit path
+    createOrbitPath(4, 0x00ff00, scene);
+
+    // Path lines
+    const truePathObj = createPathLine(0xffff00, scene);
+    const noisyPathObj = createPathLine(0xff00ff, scene);
+    const kalmanPathObj = createPathLine(0x00ffff, scene);
+    const maxPathLength = 150;
+
+    // Line of sight
+    const losGeometry = new THREE.BufferGeometry();
+    const losMaterial = new THREE.LineBasicMaterial({ 
+      color: 0x00ff00, 
+      transparent: true, 
+      opacity: 0.4,
+      linewidth: 1
+    });
+    const losLine = new THREE.Line(losGeometry, losMaterial);
+    scene.add(losLine);
+
+    // State variables
+    let solarFlare = false;
+    let rValue = 0.01;
+    let qValue = 0.001;
+    let isPaused = false;
+    const stats = { error: 0, measurements: 0, distance: 0, uncertainty: 0, velocity: 0 };
+    const kf = new KalmanFilter();
+    let time = 0;
+    let measurementCount = 0;
+    let objectPhase = 0;
+    let uncertaintyCircle = null;
+
+    // Flyby position
+    function getFlybyPosition(t) {
+      const speed = 0.15;
+      const position = (t * speed) - 15;
+      const closestApproach = 3;
+      const x = position;
+      const z = closestApproach * Math.sqrt(1 + (position * position) / 100);
+      return { x, z, reset: x > 15 };
+    }
+
+    // Update UI
+    function updateStats() {
+      document.getElementById('rValue').textContent = (solarFlare ? rValue * 10 : rValue).toFixed(4);
+      document.getElementById('rValue').style.color = solarFlare ? '#f87171' : '#10b981';
+      document.getElementById('qValue').textContent = (solarFlare ? qValue * 0.3 : qValue).toFixed(4);
+      document.getElementById('qValue').style.color = solarFlare ? '#10b981' : '#9ca3af';
+      document.getElementById('error').textContent = stats.error.toFixed(3);
+      document.getElementById('uncertainty').textContent = stats.uncertainty.toFixed(3);
+      document.getElementById('distance').textContent = stats.distance.toFixed(2);
+      document.getElementById('velocity').textContent = stats.velocity.toFixed(3);
+      document.getElementById('measurements').textContent = stats.measurements;
+    }
+
+    // Animation loop
+    function animate() {
+      requestAnimationFrame(animate);
+      if (!isPaused) {
+        time += 0.02;
+        objectPhase += 1;
+
+        // Satellite orbit
+        const satAngle = time * 0.5;
+        trackingSatellite.position.set(
+          Math.cos(satAngle) * 4,
+          0,
+          Math.sin(satAngle) * 4
+        );
+        trackingSatellite.rotation.y = satAngle;
+
+        // Target flyby
+        const flybyPos = getFlybyPosition(objectPhase);
+        if (flybyPos.reset) {
+          objectPhase = 0;
+          kf.reset();
+          measurementCount = 0;
+          truePathObj.points = [];
+          noisyPathObj.points = [];
+          kalmanPathObj.points = [];
+        }
+
+        const { x: trueX, z: trueZ } = flybyPos;
+        targetObject.position.set(trueX, 0, trueZ);
+        targetObject.rotation.x += 0.05;
+        targetObject.rotation.y += 0.03;
+
+        // Kalman filtering
+        const currentR = solarFlare ? rValue * 10 : rValue;
+        const currentQ = solarFlare ? qValue * 0.3 : qValue;
+        kf.predict(currentQ);
+        const noiseScale = solarFlare ? Math.sqrt(currentR) * 3 : Math.sqrt(currentR);
+        const noisyX = trueX + (Math.random() - 0.5) * noiseScale * 2;
+        const noisyZ = trueZ + (Math.random() - 0.5) * noiseScale * 2;
+        kf.update([noisyX, noisyZ], currentR);
+        measurementCount++;
+
+        // Stats calculation
+        stats.error = Math.sqrt(
+          Math.pow(kf.x[0] - trueX, 2) + 
+          Math.pow(kf.x[1] - trueZ, 2)
+        );
+        stats.distance = Math.sqrt(
+          Math.pow(trackingSatellite.position.x - trueX, 2) + 
+          Math.pow(trackingSatellite.position.z - trueZ, 2)
+        );
+        stats.uncertainty = kf.getUncertainty();
+        stats.velocity = Math.sqrt(kf.x[2] * kf.x[2] + kf.x[3] * kf.x[3]);
+        stats.measurements = measurementCount;
+        updateStats();
+
+        // Update paths
+        truePathObj.points.push(new THREE.Vector3(trueX, 0.1, trueZ));
+        noisyPathObj.points.push(new THREE.Vector3(noisyX, 0.1, noisyZ));
+        kalmanPathObj.points.push(new THREE.Vector3(kf.x[0], 0.1, kf.x[1]));
+        [truePathObj, noisyPathObj, kalmanPathObj].forEach(pathObj => {
+          if (pathObj.points.length > maxPathLength) {
+            pathObj.points.shift();
+          }
+          pathObj.line.geometry.setFromPoints(pathObj.points);
+        });
+
+        // Line of sight
+        losLine.geometry.setFromPoints([
+          trackingSatellite.position,
+          new THREE.Vector3(trueX, 0, trueZ)
+        ]);
+
+        // Uncertainty visualization
+        if (uncertaintyCircle) {
+          scene.remove(uncertaintyCircle);
+        }
+        const uncertaintyRadius = Math.max(kf.getUncertainty() * 2, 0.1);
+        const circleGeometry = new THREE.RingGeometry(
+          uncertaintyRadius * 0.9, 
+          uncertaintyRadius, 
+          32
+        );
+        const circleMaterial = new THREE.MeshBasicMaterial({
+          color: 0x00ffff,
+          transparent: true,
+          opacity: 0.3,
+          side: THREE.DoubleSide
+        });
+        uncertaintyCircle = new THREE.Mesh(circleGeometry, circleMaterial);
+        uncertaintyCircle.position.set(kf.x[0], 0.05, kf.x[1]);
+        uncertaintyCircle.rotation.x = -Math.PI / 2;
+        scene.add(uncertaintyCircle);
+
+        // Solar flare effects
+        if (solarFlare) {
+          glow.material.opacity = 0.4 + Math.sin(time * 5) * 0.15;
+          glow.material.color.setHex(0xff6644);
+          pointLight.color.setHex(0xff8844);
+          pointLight.intensity = 1.2 + Math.sin(time * 8) * 0.2;
+        } else {
+          glow.material.opacity = 0.2;
+          glow.material.color.setHex(0x4488ff);
+          pointLight.color.setHex(0xffffff);
+          pointLight.intensity = 1;
+        }
+
+        // Earth rotation
+        earth.rotation.y += 0.001;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Event handlers
+    document.getElementById('solarFlareBtn').addEventListener('click', () => {
+      solarFlare = !solarFlare;
+      const btn = document.getElementById('solarFlareBtn');
+      btn.textContent = solarFlare ? '☀️ SOLAR FLARE ACTIVE' : '🌙 Normal Conditions';
+      btn.className = `button ${solarFlare ? 'solar-flare' : 'normal'}`;
+    });
+
+    document.getElementById('pauseBtn').addEventListener('click', () => {
+      isPaused = !isPaused;
+      document.getElementById('pauseBtn').textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      stats.error = 0;
+      stats.measurements = 0;
+      stats.distance = 0;
+      stats.uncertainty = 0;
+      stats.velocity = 0;
+      objectPhase = 0;
+      kf.reset();
+      measurementCount = 0;
+      truePathObj.points = [];
+      noisyPathObj.points = [];
+      kalmanPathObj.points = [];
+      updateStats();
+    });
+
+    document.getElementById('rRange').addEventListener('input', (e) => {
+      rValue = parseFloat(e.target.value);
+      document.getElementById('rLabel').textContent = `Measurement Noise (R): ${rValue.toFixed(4)}`;
+    });
+
+    document.getElementById('qRange').addEventListener('input', (e) => {
+      qValue = parseFloat(e.target.value);
+      document.getElementById('qLabel').textContent = `Process Noise (Q): ${qValue.toFixed(4)}`;
+    });
+
+    // Handle resize
+    window.addEventListener('resize', () => {
+      const width = container.clientWidth;
+      const height = container.clientHeight;
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(width, height);
+    });
+
+    // Start animation
+    animate();
+
+    // Cleanup
+    window.addEventListener('unload', () => {
+      scene.traverse(obj => {
+        if (obj.geometry) obj.geometry.dispose();
+        if (obj.material) {
+          if (Array.isArray(obj.material)) {
+            obj.material.forEach(mat => mat.dispose());
+          } else {
+            obj.material.dispose();
+          }
+        }
+      });
+      renderer.dispose();
+    });
+  </script>
+</body>
+</html>
