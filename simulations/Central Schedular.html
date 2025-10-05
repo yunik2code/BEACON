@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Walker-Delta & Polar Constellation — 8 Planes × 4 Sat</title>
+  <style>
+    :root {
+      --glass: rgba(12,16,24,0.65);
+      --accent: rgba(0,204,255,0.9);
+      --muted: rgba(180,200,220,0.12);
+      --pane-radius: 12px;
+    }
+    html,body { height:100%; margin:0; font-family: Inter, system-ui, Arial; background:#02030a; color:#e6f6ff; overflow:hidden; }
+    #header {
+      position:absolute; top:8px; left:50%; transform:translateX(-50%);
+      background: var(--glass); padding:6px 14px; border-radius:10px; z-index:20;
+      font-weight:600; font-size:0.9rem; color:#cfefff; border:1px solid rgba(0,180,255,0.08);
+      backdrop-filter: blur(6px);
+    }
+    #container { width:100vw; height:100vh; position:relative; }
+    #overlay {
+      position:absolute; left:12px; top:12px; z-index:18;
+      background:var(--glass); padding:10px; border-radius:10px; width:260px;
+      border:1px solid rgba(0,180,255,0.06); backdrop-filter: blur(6px);
+      font-size:0.85rem;
+    }
+    .time-display { color:var(--accent); font-weight:700; margin-bottom:8px; }
+    .legend {
+      position:absolute; right:12px; top:12px; z-index:18;
+      background:var(--glass); padding:10px; border-radius:10px; width:190px;
+      border:1px solid rgba(139,92,246,0.06); font-size:0.82rem; backdrop-filter: blur(6px);
+    }
+    .legend-item { display:flex; gap:8px; align-items:center; margin:6px 0; }
+    #controls {
+      position:absolute; left:50%; transform:translateX(-50%); bottom:12px; z-index:20;
+      background:linear-gradient(180deg, rgba(10,14,18,0.7), rgba(10,12,16,0.65));
+      padding:10px 14px; border-radius:999px; display:flex; gap:10px; align-items:center;
+      border:1px solid rgba(0,180,255,0.08); box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+    }
+    #homeBtn {
+      border: 1px solid blue;
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      z-index: 20;
+      background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03);
+    }
+    .pill-btn {
+      border-radius:999px; border:none; padding:8px 12px; cursor:pointer; background:transparent;
+      color:#eafcff; font-weight:700; letter-spacing:0.2px;
+    }
+    .pill-btn.primary {
+      background:linear-gradient(90deg,#00aaff33,#00ccff44); box-shadow:0 6px 20px rgba(0,204,255,0.06);
+      border:1px solid rgba(0,204,255,0.12);
+    }
+    .pill-btn.secondary { background: rgba(255,255,255,0.02); border:1px solid rgba(255,255,255,0.03); }
+    input[type=range] { width:160px; appearance:none; height:6px; background:var(--muted); border-radius:999px; }
+    select { background:transparent; color:#eafcff; border-radius:8px; border:1px solid rgba(255,255,255,0.03); padding:6px; }
+    .sat-count {
+      position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:19; font-size:0.78rem;
+      background: rgba(0,0,0,0.45); padding:6px 10px; border-radius:999px; border:1px solid rgba(255,255,255,0.03);
+      color:#bfefff;
+    }
+    canvas { display:block; width:100%; height:100%; }
+    @media (max-width:600px) {
+      #overlay, .legend { display:none; }
+      input[type=range] { width:120px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="header">Walker-Delta & Polar Constellation • 8 Planes × 4 Satellites</div>
+  <div id="container"></div>
+  <div class="sat-count">Satellites: <span id="satCount">32</span></div>
+  <div id="overlay">
+    <div class="time-display">Time: <span id="timeValue">0</span> min</div>
+    <div id="statusContent">Press ▶ Play</div>
+  </div>
+  <div class="legend">
+    <div style="font-weight:700;color:#9be8ff;margin-bottom:6px">Legend</div>
+    <div class="legend-item"><div style="width:12px;height:12px;background:#00ffcc;border-radius:50%"></div> Sub-array A</div>
+    <div class="legend-item"><div style="width:12px;height:12px;background:#ff8a33;border-radius:50%"></div> Sub-array B</div>
+    <div class="legend-item"><div style="width:12px;height:12px;background:#cc33ff;border-radius:50%"></div> Sub-array C (Polar)</div>
+    <hr style="opacity:0.06;margin:8px 0"/>
+    <div style="font-size:0.82rem;color:#cfefff">Click a Tile button to route all sats to that Tile.</div>
+  </div>
+  <div id="controls">
+    <button id="playBtn" class="pill-btn primary">▶ Play</button>
+    <button id="resetBtn" class="pill-btn secondary">↻ Reset</button>
+    <label style="display:flex;align-items:center;gap:8px;color:#cfefff;font-weight:600">
+      Timeline
+      <input id="timeline" type="range" min="0" max="90" step="0.1" value="0"/>
+      <span id="timeLabel" style="min-width:36px;text-align:center;">0m</span>
+    </label>
+    <label style="display:flex;gap:8px;align-items:center">
+      <select id="speedSelect" title="speed">
+        <option value="0.25">0.25x</option>
+        <option value="0.5">0.5x</option>
+        <option value="1" selected>1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+      </select>
+    </label>
+    <div style="width:10px"></div>
+    <button id="tileA" class="pill-btn">Tile A</button>
+    <button id="tileB" class="pill-btn">Tile B</button>
+    <button id="tileC" class="pill-btn">Tile C</button>
+  </div>
+  <button id="homeBtn" class="pill-btn secondary">🏠 Back to Home Page</button>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js';
+    const container = document.getElementById('container');
+    const playBtn = document.getElementById('playBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const timeline = document.getElementById('timeline');
+    const timeLabel = document.getElementById('timeLabel');
+    const timeValue = document.getElementById('timeValue');
+    const statusContent = document.getElementById('statusContent');
+    const speedSelect = document.getElementById('speedSelect');
+    const tileAbtn = document.getElementById('tileA');
+    const tileBbtn = document.getElementById('tileB');
+    const tileCbtn = document.getElementById('tileC');
+    const homeBtn = document.getElementById('homeBtn');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x04050b);
+    const camera = new THREE.PerspectiveCamera(60, container.clientWidth / container.clientHeight, 0.1, 2000);
+    camera.position.set(0, 30, 60);
+    camera.lookAt(0,0,0);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha:false });
+    renderer.setPixelRatio(window.devicePixelRatio || 1);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+    const ambient = new THREE.AmbientLight(0xffffff, 0.8);
+    scene.add(ambient);
+    const key = new THREE.DirectionalLight(0xffffff, 0.6);
+    key.position.set(50,80,50);
+    scene.add(key);
+    const earthRadius = 8;
+    const earthGeom = new THREE.SphereGeometry(earthRadius, 64, 64);
+    const earthMat = new THREE.MeshPhongMaterial({ color:0x1f6fe0, emissive:0x071127, shininess:20 });
+    const earth = new THREE.Mesh(earthGeom, earthMat);
+    scene.add(earth);
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(earthRadius*1.06, 64, 64),
+      new THREE.MeshBasicMaterial({ color:0x00ccff, transparent:true, opacity:0.12, side: THREE.BackSide })
+    );
+    scene.add(atmosphere);
+    function addStars(count) {
+      const g = new THREE.BufferGeometry();
+      const pts = new Float32Array(count*3);
+      for (let i=0;i<count;i++){
+        pts[3*i] = (Math.random()-0.5)*2000;
+        pts[3*i+1] = (Math.random()-0.5)*1200;
+        pts[3*i+2] = (Math.random()-0.5)*2000;
+      }
+      g.setAttribute('position', new THREE.BufferAttribute(pts,3));
+      const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 1.2, color:0xffffff, opacity:0.9, transparent:true }));
+      scene.add(p);
+    }
+    addStars(1800);
+    const earthActualRadius = 6371;
+    const altitude = 500;
+    const scaleFactor = earthRadius / earthActualRadius;
+    const orbitRadius = (earthActualRadius + altitude) * scaleFactor;
+    const numPlanes = 8;
+    const numSatsPerPlane = 4;
+    const incl = 55 * Math.PI/180;
+    const polarIncl = 90 * Math.PI/180;
+    const orbits = [];
+    const colors = [0x00ffcc, 0xff8a33, 0xcc33ff, 0x33ccff, 0xffaa33, 0xcc66ff, 0x66ffcc, 0xffcc66];
+    const raans = [0, 60, 120, 180, 240, 300, 0, 90].map(deg => deg * Math.PI/180);
+    for (let p=0; p<numPlanes; p++) {
+      const isPolar = p >= 6;
+      const raan = raans[p];
+      const inclination = isPolar ? polarIncl : incl;
+      const pts = [];
+      const seg = 192;
+      for (let j=0; j<=seg; j++) {
+        const angle = (j/seg) * Math.PI*2;
+        let x = orbitRadius * Math.cos(angle);
+        let y = orbitRadius * Math.sin(angle) * Math.sin(inclination);
+        let z = orbitRadius * Math.sin(angle) * Math.cos(inclination);
+        const xRot = x * Math.cos(raan) - z * Math.sin(raan);
+        const zRot = x * Math.sin(raan) + z * Math.cos(raan);
+        pts.push(new THREE.Vector3(xRot, y, zRot));
+      }
+      const orbitGeom = new THREE.BufferGeometry().setFromPoints(pts);
+      const orbitMat = new THREE.LineBasicMaterial({ color: colors[p], transparent: true, opacity: 0.18 });
+      const line = new THREE.Line(orbitGeom, orbitMat);
+      scene.add(line);
+      orbits.push({ raan, pts, line, color: colors[p], isPolar });
+    }
+    const satellites = [];
+    function createSatMesh(color) {
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.8,0.6,1.0), new THREE.MeshStandardMaterial({ color }));
+      const panel1 = new THREE.Mesh(new THREE.BoxGeometry(1.6,0.05,0.4), new THREE.MeshStandardMaterial({ color:0x0e2230, metalness:0.2 }));
+      panel1.position.set(0.9,0,0);
+      const panel2 = panel1.clone(); panel2.position.x = -0.9;
+      g.add(body, panel1, panel2);
+      const glow = new THREE.Mesh(new THREE.SphereGeometry(0.8,12,12), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.0 }));
+      g.add(glow);
+      return { group:g, body, glow };
+    }
+    for (let p=0; p<numPlanes; p++) {
+      for (let s=0; s<numSatsPerPlane; s++) {
+        const satObj = createSatMesh(orbits[p].color);
+        scene.add(satObj.group);
+        satellites.push({
+          ...satObj,
+          planeIndex: p,
+          phase: (s * Math.PI*2) / numSatsPerPlane
+        });
+      }
+    }
+    const tiles = [];
+    const tileDefs = [
+      { name:'Tile A', pos:new THREE.Vector3(20,14,-40), color:0xffaa00 },
+      { name:'Tile B', pos:new THREE.Vector3(-26,10,-36), color:0x00aaff },
+      { name:'Tile C', pos:new THREE.Vector3(24,18,-38), color:0xaa00ff }
+    ];
+    function createTile(def) {
+      const g = new THREE.Group();
+      g.position.copy(def.pos);
+      const plane = new THREE.Mesh(new THREE.PlaneGeometry(8,8), new THREE.MeshBasicMaterial({ color:def.color, transparent:true, opacity:0.18, side:THREE.DoubleSide }));
+      plane.rotation.x = Math.PI*0.02;
+      g.add(plane);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(3,4.4,64), new THREE.MeshBasicMaterial({ color:def.color, transparent:true, opacity:0.14, side:THREE.DoubleSide }));
+      ring.rotation.x = -Math.PI/2;
+      ring.position.y = -0.05;
+      g.add(ring);
+      const cvs = document.createElement('canvas'); cvs.width=256; cvs.height=64;
+      const ctx = cvs.getContext('2d');
+      ctx.fillStyle='rgba(255,255,255,1)'; ctx.font='28px sans-serif'; ctx.fillText(def.name, 10, 36);
+      const tex = new THREE.CanvasTexture(cvs);
+      const label = new THREE.Mesh(new THREE.PlaneGeometry(6,1.6), new THREE.MeshBasicMaterial({ map:tex, transparent:true }));
+      label.position.set(0,4.2,0);
+      g.add(label);
+      scene.add(g);
+      return { group:g, ring, plane, active:false, color:def.color, name:def.name };
+    }
+    for (const d of tileDefs) tiles.push(createTile(d));
+    const subArrays = {
+      planeA: { satellites: [], color: 0x00ffcc, target: null, act: false },
+      planeB: { satellites: [], color: 0xff8a33, target: null, act: false },
+      polar: { satellites: [], color: 0xcc33ff, target: null, act: false }
+    };
+    function isOccluded(sat, tilePos) {
+      if (!sat || !sat.group || !sat.group.position || !tilePos) return true;
+      const earthPos = new THREE.Vector3(0, 0, 0);
+      const satToEarth = earthPos.clone().sub(sat.group.position).normalize();
+      const satToTile = tilePos.clone().sub(sat.group.position).normalize();
+      const dot = satToEarth.dot(satToTile);
+      if (dot > 0.95) {
+        const distToEarth = sat.group.position.distanceTo(earthPos);
+        const distToTile = sat.group.position.distanceTo(tilePos);
+        return distToEarth < distToTile;
+      }
+      return false;
+    }
+    function assignSubarraysByTimeline(entry) {
+      for (const k of Object.keys(subArrays)) {
+        subArrays[k].satellites = [];
+        subArrays[k].target = null;
+        subArrays[k].act = false;
+      }
+      if (!entry) return;
+      const availableSats = satellites.filter(sat => sat && sat.group && sat.group.position);
+      if (entry.planeA && entry.planeA !== 'Earth occult' && entry.planeA !== 'Downlink') {
+        const tile = tiles.find(t => t.name === entry.tileA);
+        if (tile) {
+          const count = entry.planeA.includes('Slew') ? 2 : 3;
+          const planeASats = availableSats
+            .filter(s => !isOccluded(s, tile.group.position) && !orbits[s.planeIndex].isPolar)
+            .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+            .slice(0, count);
+          subArrays.planeA.satellites = planeASats;
+          subArrays.planeA.target = entry.tileA;
+          subArrays.planeA.act = planeASats.length > 0;
+        }
+      }
+      if (entry.planeB && entry.planeB !== 'Slew') {
+        const tile = tiles.find(t => t.name === entry.tileB);
+        if (tile) {
+          const count = entry.planeB.includes('Slew') ? 2 : 3;
+          const planeBSats = availableSats
+            .filter(s => !isOccluded(s, tile.group.position) && !orbits[s.planeIndex].isPolar && !subArrays.planeA.satellites.includes(s))
+            .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+            .slice(0, count);
+          subArrays.planeB.satellites = planeBSats;
+          subArrays.planeB.target = entry.tileB;
+          subArrays.planeB.act = planeBSats.length > 0;
+        }
+      }
+      if (entry.polar) {
+        const tile = tiles.find(t => t.name === entry.tilePolar);
+        if (tile) {
+          const count = entry.polar.includes('Slew') ? 2 : 3;
+          const polarSats = availableSats
+            .filter(s => !isOccluded(s, tile.group.position) && orbits[s.planeIndex].isPolar && !subArrays.planeA.satellites.includes(s) && !subArrays.planeB.satellites.includes(s))
+            .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+            .slice(0, count);
+          subArrays.polar.satellites = polarSats;
+          subArrays.polar.target = entry.tilePolar;
+          subArrays.polar.act = polarSats.length > 0;
+        }
+      }
+    }
+    const timelineData = [
+      { time:[0,15], planeA:'Tile A, 15 users', planeB:null, polar:null, note:'Orion Nebula visible to A', tileA:'Tile A' },
+      { time:[15,25], planeA:'Tile A, 20 users', planeB:null, polar:null, note:'A at full capacity', tileA:'Tile A' },
+      { time:[25,30], planeA:'Slew to Tile B', planeB:null, polar:null, note:'Users queued', tileA:null },
+      { time:[30,40], planeA:'Tile B, 12 users', planeB:'Tile A, 10 users', polar:null, note:'Handoff: Tile A users move from A → B', tileA:'Tile B', tileB:'Tile A' },
+      { time:[40,50], planeA:'Earth occult', planeB:'Tile A, 18 users', polar:'Tile C, 5 users', note:'A idle, B carries load, C covers polar', tileB:'Tile A', tilePolar:'Tile C' },
+      { time:[50,60], planeA:null, planeB:'Tile A, 20 users', polar:'Tile A, 5 users', note:'B at capacity, C picks up polar overlap', tileB:'Tile A', tilePolar:'Tile A' },
+      { time:[60,70], planeA:'Tile C, 15 users', planeB:'Slew', polar:'Tile A, 12 users', note:'Relay continues', tileA:'Tile C', tilePolar:'Tile A' },
+      { time:[70,90], planeA:'Downlink', planeB:'Tile B, 14 users', polar:'Tile A, 18 users', note:'Global concurrency ~45 users', tileB:'Tile B', tilePolar:'Tile A' }
+    ];
+    function findTimelineEntry(t) {
+      return timelineData.find(e => (t >= e.time[0] && t < e.time[1]));
+    }
+    let observationBeams = [];
+    function createBeam(fromPos, toPos, color) {
+      const geom = new THREE.BufferGeometry().setFromPoints([fromPos.clone(), toPos.clone()]);
+      const mat = new THREE.LineBasicMaterial({ color, transparent:true, opacity:0.85 });
+      const line = new THREE.Line(geom, mat);
+      const particle = new THREE.Mesh(new THREE.SphereGeometry(0.12,8,8), new THREE.MeshBasicMaterial({ color }));
+      particle.position.copy(fromPos);
+      scene.add(line); scene.add(particle);
+      return { line, particle, from: fromPos.clone(), to: toPos.clone(), progress: Math.random() * 0.8 };
+    }
+    function clearBeams() {
+      observationBeams.forEach(b => {
+        scene.remove(b.line); scene.remove(b.particle);
+      });
+      observationBeams = [];
+    }
+    function updateBeams() {
+      clearBeams();
+      Object.entries(subArrays).forEach(([key, v]) => {
+        if (v.act && v.satellites.length > 0 && v.target) {
+          const tileObj = tiles.find(t => t.name === v.target);
+          if (!tileObj) return;
+          v.satellites.forEach(sat => {
+            if (sat && sat.group && !isOccluded(sat, tileObj.group.position)) {
+              const beam = createBeam(
+                sat.group.position,
+                tileObj.group.position,
+                sat.glow.material ? sat.glow.material.color.getHex() : sat.body.material.color.getHex()
+              );
+              observationBeams.push(beam);
+            }
+          });
+        }
+      });
+    }
+    function animateBeams() {
+      observationBeams.forEach(b => {
+        b.progress += 0.02;
+        if (b.progress > 1) b.progress = 0;
+        b.particle.position.lerpVectors(b.from, b.to, b.progress);
+      });
+    }
+    function updateTilesPulse(t) {
+      tiles.forEach(tile => {
+        const s = tile.active ? 1.1 + Math.sin(t*6)*0.08 : 1 + Math.sin(t*1.8)*0.03;
+        tile.ring.scale.set(s,s,s);
+        tile.plane.material.opacity = tile.active ? 0.34 : 0.18;
+      });
+    }
+    function updateStatusPanel(t) {
+      const entry = findTimelineEntry(t);
+      timeValue.textContent = `${Math.floor(t)} - ${Math.ceil(t)}`;
+      document.getElementById('timeLabel').textContent = `${Math.floor(t)}m`;
+      if (!entry) {
+        statusContent.innerHTML = '<div style="opacity:0.7">Idle / outside timeline</div>';
+        return;
+      }
+      const html = `
+        <div style="font-weight:700;color:#bff7ff">Sub-array A:</div>
+        <div style="margin-bottom:6px">${entry.planeA || 'Idle'}</div>
+        <div style="font-weight:700;color:#ffd6a6">Sub-array B:</div>
+        <div style="margin-bottom:6px">${entry.planeB || 'Idle'}</div>
+        <div style="font-weight:700;color:#e7b3ff">Sub-array C (Polar):</div>
+        <div style="margin-bottom:6px">${entry.polar || 'Idle'}</div>
+        <div style="margin-top:8px;color:var(--accent)">📝 ${entry.note}</div>
+      `;
+      statusContent.innerHTML = html;
+    }
+    let isDragging=false, prev = {x:0,y:0}, camAng={theta:0,phi:Math.PI/6}, camDist=80;
+    function updateCameraPosition() {
+      camera.position.x = camDist * Math.sin(camAng.phi) * Math.cos(camAng.theta);
+      camera.position.y = camDist * Math.cos(camAng.phi);
+      camera.position.z = camDist * Math.sin(camAng.phi) * Math.sin(camAng.theta);
+      camera.lookAt(0,0,0);
+    }
+    renderer.domElement.addEventListener('mousedown', (e)=>{ isDragging=true; prev.x=e.clientX; prev.y=e.clientY; });
+    window.addEventListener('mousemove', (e)=> {
+      if(!isDragging) return;
+      const dx = e.clientX - prev.x, dy = e.clientY - prev.y;
+      camAng.theta += dx*0.004; camAng.phi += dy*0.003;
+      camAng.phi = Math.max(0.12, Math.min(Math.PI-0.12, camAng.phi));
+      updateCameraPosition();
+      prev.x = e.clientX; prev.y = e.clientY;
+    });
+    window.addEventListener('mouseup', ()=> isDragging=false);
+    renderer.domElement.addEventListener('touchstart', (e)=>{ if(e.touches[0]) { isDragging=true; prev.x=e.touches[0].clientX; prev.y=e.touches[0].clientY; }});
+    renderer.domElement.addEventListener('touchmove', (e)=> {
+      if(!isDragging) return;
+      const t = e.touches[0];
+      const dx=t.clientX-prev.x; const dy = t.clientY-prev.y;
+      camAng.theta += dx*0.006; camAng.phi += dy*0.005;
+      camAng.phi = Math.max(0.12, Math.min(Math.PI-0.12, camAng.phi));
+      updateCameraPosition();
+      prev.x=t.clientX; prev.y=t.clientY;
+    });
+    renderer.domElement.addEventListener('touchend', ()=> isDragging=false);
+    // Zoom functionality
+    renderer.domElement.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      camDist += e.deltaY * 0.05;
+      camDist = Math.max(20, Math.min(150, camDist)); // Constrain zoom between 20 and 150
+      updateCameraPosition();
+    });
+    let touchDist = 0;
+    renderer.domElement.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        touchDist = Math.sqrt(dx * dx + dy * dy);
+      }
+    });
+    renderer.domElement.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const newTouchDist = Math.sqrt(dx * dx + dy * dy);
+        const delta = (newTouchDist - touchDist) * 0.1;
+        camDist -= delta;
+        camDist = Math.max(20, Math.min(150, camDist)); // Constrain zoom
+        updateCameraPosition();
+        touchDist = newTouchDist;
+      }
+    });
+    let currentTime = 0;
+    let isPlaying = false;
+    let speed = parseFloat(speedSelect.value);
+    playBtn.addEventListener('click', ()=> {
+      isPlaying = !isPlaying;
+      playBtn.textContent = isPlaying ? '⏸ Pause' : '▶ Play';
+    });
+    resetBtn.addEventListener('click', ()=> {
+      currentTime = 0; timeline.value = 0; updateAllAtTime(0);
+    });
+    timeline.addEventListener('input', ()=> {
+      currentTime = parseFloat(timeline.value);
+      updateAllAtTime(currentTime);
+    });
+    speedSelect.addEventListener('change', ()=> speed = parseFloat(speedSelect.value));
+    tileAbtn.addEventListener('click', ()=> {
+      tiles.forEach(t => t.active = (t.name === 'Tile A'));
+      const tile = tiles.find(t => t.name === 'Tile A');
+      if (tile) {
+        const availableSats = satellites
+          .filter(s => s && s.group && !isOccluded(s, tile.group.position))
+          .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+          .slice(0, 3);
+        subArrays.planeA.act = availableSats.length > 0; subArrays.planeA.target = 'Tile A'; subArrays.planeA.satellites = availableSats;
+        subArrays.planeB.act = availableSats.length > 0; subArrays.planeB.target = 'Tile A'; subArrays.planeB.satellites = availableSats;
+        subArrays.polar.act = availableSats.length > 0; subArrays.polar.target = 'Tile A'; subArrays.polar.satellites = availableSats;
+        updateBeams();
+      }
+    });
+    tileBbtn.addEventListener('click', ()=> {
+      tiles.forEach(t => t.active = (t.name === 'Tile B'));
+      const tile = tiles.find(t => t.name === 'Tile B');
+      if (tile) {
+        const availableSats = satellites
+          .filter(s => s && s.group && !isOccluded(s, tile.group.position))
+          .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+          .slice(0, 3);
+        subArrays.planeA.act = availableSats.length > 0; subArrays.planeA.target = 'Tile B'; subArrays.planeA.satellites = availableSats;
+        subArrays.planeB.act = availableSats.length > 0; subArrays.planeB.target = 'Tile B'; subArrays.planeB.satellites = availableSats;
+        subArrays.polar.act = availableSats.length > 0; subArrays.polar.target = 'Tile B'; subArrays.polar.satellites = availableSats;
+        updateBeams();
+      }
+    });
+    tileCbtn.addEventListener('click', ()=> {
+      tiles.forEach(t => t.active = (t.name === 'Tile C'));
+      const tile = tiles.find(t => t.name === 'Tile C');
+      if (tile) {
+        const availableSats = satellites
+          .filter(s => s && s.group && !isOccluded(s, tile.group.position))
+          .sort((a, b) => a.group.position.distanceTo(tile.group.position) - b.group.position.distanceTo(tile.group.position))
+          .slice(0, 3);
+        subArrays.planeA.act = availableSats.length > 0; subArrays.planeA.target = 'Tile C'; subArrays.planeA.satellites = availableSats;
+        subArrays.planeB.act = availableSats.length > 0; subArrays.planeB.target = 'Tile C'; subArrays.planeB.satellites = availableSats;
+        subArrays.polar.act = availableSats.length > 0; subArrays.polar.target = 'Tile C'; subArrays.polar.satellites = availableSats;
+        updateBeams();
+      }
+    });
+    homeBtn.addEventListener('click', () => {
+      window.location.href = 'web_exp.html';
+    });
+    function updateAllAtTime(t) {
+      const entry = findTimelineEntry(t);
+      tiles.forEach(ti => ti.active = false);
+      for (const k of Object.keys(subArrays)) { subArrays[k].act = false; subArrays[k].target = null; subArrays[k].satellites = []; }
+      if (entry) {
+        assignSubarraysByTimeline(entry);
+        const targets = [entry.tileA, entry.tileB, entry.tilePolar];
+        if (entry.tileA) {
+          tiles.forEach(ti => ti.active = (ti.name === entry.tileA));
+        } else if (entry.tileB) {
+          tiles.forEach(ti => ti.active = (ti.name === entry.tileB));
+        } else if (entry.tilePolar) {
+          tiles.forEach(ti => ti.active = (ti.name === entry.tilePolar));
+        }
+      }
+      updateBeams();
+      updateStatusPanel(t);
+    }
+    let last = performance.now();
+    let lastBeamUpdate = 0;
+    function animate() {
+      const now = performance.now();
+      const dt = (now - last)/1000;
+      last = now;
+      if (isPlaying) {
+        currentTime += dt * speed * 6.0;
+        if (currentTime >= 90) currentTime = 0;
+        timeline.value = currentTime;
+      }
+      satellites.forEach((s, idx) => {
+        if (!s || !s.group) return;
+        const base = (currentTime/90) * Math.PI*2;
+        const angle = base + s.phase;
+        let x = orbitRadius * Math.cos(angle);
+        let y = orbitRadius * Math.sin(angle) * Math.sin(orbits[s.planeIndex].isPolar ? polarIncl : incl);
+        let z = orbitRadius * Math.sin(angle) * Math.cos(orbits[s.planeIndex].isPolar ? polarIncl : incl);
+        const raan = orbits[s.planeIndex].raan;
+        const xRot = x * Math.cos(raan) - z * Math.sin(raan);
+        const zRot = x * Math.sin(raan) + z * Math.cos(raan);
+        s.group.position.set(xRot, y, zRot);
+        s.group.lookAt(0,0,0);
+        s.glow.material.opacity = (Object.values(subArrays).some(sa => sa.satellites.includes(s)) ? 0.18 : 0.0);
+      });
+      if (now - lastBeamUpdate > 150) {
+        updateAllAtTime(currentTime);
+        lastBeamUpdate = now;
+      }
+      animateBeams();
+      updateTilesPulse(currentTime*0.02);
+      updateStatusPanel(currentTime);
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+    updateAllAtTime(0);
+    animate();
+    window.addEventListener('resize', ()=> {
+      camera.aspect = container.clientWidth / container.clientHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(container.clientWidth, container.clientHeight);
+    });
+    console.log('Walker-Delta & Polar visualization initialized. Satellites:', satellites.length);
+  </script>
+</body>
+</html>
