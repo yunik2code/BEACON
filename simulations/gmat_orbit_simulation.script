@@ -31,7 +31,7 @@ Create GroundTrackPlot GroundTrackPlot1;
 
 Create Spacecraft SatTemplate;
 GMAT SatTemplate.DateFormat = UTCGregorian;
-GMAT SatTemplate.Epoch = '01 Oct 2025 17:15:00.000';  % Updated to current date
+GMAT SatTemplate.Epoch = '04 Oct 2025 17:15:00.000';  % Updated to current date
 GMAT SatTemplate.CoordinateSystem = EarthMJ2000Eq;
 GMAT SatTemplate.DisplayStateType = Keplerian;
 GMAT SatTemplate.SMA = 6878.137;  % LEO: 500 km alt + Earth radius
@@ -646,4 +646,5 @@ For step = deltaT : deltaT : totalTime
    FindEvents CL_Sat30;
    FindEvents CL_Sat31;
    FindEvents CL_Sat32;
+
 EndFor;
